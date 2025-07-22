@@ -1,9 +1,10 @@
 (function () {
     'use-strict';
-    const SETTINGS_KEY = 'AI指引助手8.1变量';
+    const SETTINGS_KEY = 'AI指引助手8.2变量';
     const SUGGESTION_CONTAINER_ID = 'ai-reply-suggestion-container';
     const SUGGESTION_MODAL_ID = 'ai-reply-suggestion-modal';
-    const LOG_PREFIX = '[回复建议插件 v8.1]';
+    const LOG_PREFIX = '[回复建议插件 v8.2]';
+    // 版本更新：直接在prompt中使用SillyTavern原生宏 {{persona}}
     const DEFAULT_PROMPTS = [
         {
             name: '策略型 (默认)',
@@ -61,7 +62,7 @@
 
 # 对话上下文
 [用户人设]:
-{{user_persona}}
+{{persona}}
 
 [用户的回复]：
 {{user_last_reply}}
@@ -87,14 +88,14 @@
 3.  严格遵守以下要求：
     -   放开字数限制：每条建议应有足够的长度（建议在30-80字之间），以确保内容的丰富性和沉浸感。
     -   模仿并深化：使用第一人称回复时，不仅要模仿[用户的回复]中的语气和风格，还要在此基础上进行深化，让角色的形象更加鲜明。
-    -   展现而非告知 (Show, don't tell)：尽量用具体的行为和感受来代替简单的形容词，但避免不合时宜的升华与文学性过载。
+    -   展现而非告知 (Show, don't tell)：尽量用具体的行为和感受来代替简单的形容词。
 
 # 输出格式
 你必须只响应一个不换行的单行文本。每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
 
 # 对话上下文
 [用户人设]:
-{{user_persona}}
+{{persona}}
 
 [用户的回复]：
 {{user_last_reply}}
@@ -115,7 +116,7 @@
         characterBindings: {},
         prompts: JSON.parse(JSON.stringify(DEFAULT_PROMPTS))
     };
-    const SCRIPT_VERSION = '8.1.0';
+    const SCRIPT_VERSION = '8.2.0';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -131,26 +132,29 @@
     async function callOpenAICompatibleAPI(promptText) { logMessage(`<b>[API 调用]</b> 正在使用 OpenAI 兼容模式...`); const body = { model: settings.model, messages: [{ role: 'user', content: promptText }], temperature: 0.8 }; const response = await fetch(`${settings.baseUrl}/chat/completions`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${settings.apiKey}` }, body: JSON.stringify(body) }); if (!response.ok) { const errorData = await response.json().catch(() => ({ error: { message: response.statusText } })); throw new Error(errorData.error.message); } const data = await response.json(); return data.choices[0].message.content; }
     async function callGoogleGeminiAPI(promptText) { logMessage(`<b>[API 调用]</b> 正在使用 Google AI (Gemini) 直连模式...`); const url = `https://generativelanguage.googleapis.com/v1beta/models/${settings.model}:generateContent?key=${settings.apiKey}`; const body = { contents: [{ parts: [{ text: promptText }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 8192, }, }; const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); const data = await response.json(); if (!response.ok) { const errorDetails = data.error ? data.error.message : await response.text(); throw new Error(errorDetails); } if (!data.candidates || data.candidates.length === 0) { const blockReason = data.promptFeedback ? data.promptFeedback.blockReason : '未知原因'; throw new Error(`请求被 Google 安全设置拦截。原因: ${blockReason}`); } return data.candidates[0].content.parts[0].text; }
     
-    async function callSuggestionAI(aiReply, userReply, userPersona) {
+    async function callSuggestionAI(aiReply, userReply) {
         cleanupSuggestions();
         const activePrompt = settings.prompts[settings.activePromptIndex];
         if (!activePrompt) {
             logMessage('<b>[API调用]</b> 没有可用的活动提示词。', 'error');
             return null;
         }
-        const promptText = activePrompt.content
-            .replace('{{user_persona}}', userPersona)
+
+        let promptTemplate = activePrompt.content
             .replace('{{ai_last_reply}}', aiReply)
             .replace('{{user_last_reply}}', userReply);
+
+        const finalPromptText = await SillyTavern.substituteParams(promptTemplate);
         
-        const sanitizedPrompt = parent$('<div>').text(promptText).html();
+        const sanitizedPrompt = parent$('<div>').text(finalPromptText).html();
         logMessage(`<b>[最终提示词]</b> <pre class="final-prompt">${sanitizedPrompt}</pre>`, 'info');
+        
         try {
             let content;
             if (settings.apiProvider === 'google_gemini') {
-                content = await callGoogleGeminiAPI(promptText);
+                content = await callGoogleGeminiAPI(finalPromptText);
             } else {
-                content = await callOpenAICompatibleAPI(promptText);
+                content = await callOpenAICompatibleAPI(finalPromptText);
             }
             logMessage(`<b>[AI原始返回]</b> <pre class="ai-raw-return">${parent$('<div>').text(content || '').html()}</pre>`, 'info');
             const filteredContent = (content && typeof content === 'string') ? content.replace(/<think>.*?<\/think>/gs, '').trim() : '';
@@ -180,37 +184,26 @@
         try {
             parent$(`#${LOG_PANEL_ID}`).empty();
             logMessage("---- 开始新一轮建议生成 ----", 'info');
-            if (typeof getChatMessages !== 'function' || typeof getLastMessageId !== 'function' || typeof TavernHelper.getUserData !== 'function') {
-                logMessage('<b>[错误]</b> 核心函数缺失，无法生成建议。', 'error');
+            if (typeof getChatMessages !== 'function' || typeof getLastMessageId !== 'function') {
+                logMessage('<b>[错误]</b> 核心消息函数缺失，无法生成建议。', 'error');
                 return;
-            }
-
-            const userData = await TavernHelper.getUserData();
-            const userPersona = userData ? (userData.description || '') : '';
-            if (userPersona) {
-                logMessage(`<b>[人设读取]</b> 成功加载用户人设。`, 'info');
             }
 
             const lastMessageId = getLastMessageId();
-            if (lastMessageId < 1) {
-                return;
-            }
+            if (lastMessageId < 1) { return; }
+            
             const range = `${lastMessageId - 1}-${lastMessageId}`;
             const lastTwoMessages = getChatMessages(range);
-            if (!lastTwoMessages || lastTwoMessages.length < 2) {
-                return;
-            }
+            if (!lastTwoMessages || lastTwoMessages.length < 2) { return; }
+            
             const [userMessage, aiMessage] = lastTwoMessages;
-            if (!userMessage || userMessage.role !== 'user' || !aiMessage || aiMessage.role !== 'assistant') {
-                return;
-            }
+            if (!userMessage || userMessage.role !== 'user' || !aiMessage || aiMessage.role !== 'assistant') { return; }
+            
             const userText = extractTextFromMessage(userMessage);
             const aiText = extractTextFromMessage(aiMessage);
-            if (!userText || !aiText) {
-                return;
-            }
-
-            const suggestions = await callSuggestionAI(aiText, userText, userPersona);
+            if (!userText || !aiText) { return; }
+            
+            const suggestions = await callSuggestionAI(aiText, userText);
             
             if (suggestions && suggestions.length > 0) {
                 renderSuggestions(suggestions);
@@ -269,7 +262,7 @@
     function updateUIPanel() { parent$('#sg-api-provider').val(settings.apiProvider); parent$('#sg-api-key').val(settings.apiKey); parent$('#sg-base-url').val(settings.baseUrl); const isGoogle = settings.apiProvider === 'google_gemini'; parent$('#sg-base-url-group').toggle(!isGoogle); const $promptList = parent$('#sg-prompt-list').empty(); if (settings.prompts && settings.prompts.length > 0) { settings.prompts.forEach((prompt, index) => { const $item = parent$(`<div class="prompt-item-container" style="background: rgba(0,0,0,0.2); border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.1);"><div class="prompt-item" style="padding: 16px; display: flex; align-items: center; gap: 16px;"><input type="text" class="prompt-name-input" value="${prompt.name}" data-index="${index}" style="flex-grow: 1; margin: 0;"><div class="prompt-item-actions" style="display: flex; gap: 8px;"><button class="sg-button secondary prompt-use-btn" data-index="${index}">使用</button><button class="sg-button danger prompt-delete-btn" data-index="${index}">删除</button></div></div><div class="form-group" style="padding: 0 16px 16px 16px; margin-bottom: 0;"><textarea class="prompt-content-textarea" data-index="${index}">${prompt.content}</textarea></div></div>`); $promptList.append($item); }); } testConnectionAndFetchModels(); }
     function bindEvents() { const parentBody = parent$('body'); parentBody.on('click', `#${BUTTON_ID}`, (event) => { event.stopPropagation(); const $overlay = parent$(`#${OVERLAY_ID}`); $overlay.show(); const $panel = $overlay.find(`#${PANEL_ID}`); centerElement($panel[0]); updateUIPanel(); }); parentBody.on('click', `#${OVERLAY_ID}`, async function(e) { if (e.target.id === OVERLAY_ID || parent$(e.target).hasClass('panel-close-btn')) { parent$(`#${OVERLAY_ID}`).hide(); } }); parent$(window.parent).on('resize', () => { if (parent$(`#${OVERLAY_ID}`).is(':visible')) { centerElement(parent$(`#${PANEL_ID}`)[0]); } }); parentBody.on('click', `#${PANEL_ID} .panel-nav-item`, function() { const tab = parent$(this).data('tab'); parent$(`#${PANEL_ID} .panel-nav-item`).removeClass('active'); parent$(this).addClass('active'); parent$(`#${PANEL_ID} .panel-content`).removeClass('active'); parent$(`#sg-panel-${tab}, [data-tab-name='${tab}']`).addClass('active'); }); parentBody.on('change', '#sg-api-provider', async function() { settings.apiProvider = parent$(this).val(); const isGoogle = settings.apiProvider === 'google_gemini'; parent$('#sg-base-url-group').toggle(!isGoogle); await saveSettings(); await testConnectionAndFetchModels(); }); parentBody.on('input', '#sg-api-key, #sg-base-url', async function() { settings.apiKey = parent$('#sg-api-key').val(); settings.baseUrl = parent$('#sg-base-url').val(); await saveSettings(); }); parentBody.on('change', '#sg-model-select', async function() { settings.model = parent$(this).val(); await saveSettings(); }); parentBody.on('click', '#sg-test-connection-btn', testConnectionAndFetchModels); parentBody.on('click', '#sg-add-prompt-btn', async () => { settings.prompts.push({ name: '新预设', content: '在这里输入你的提示词...' }); updateUIPanel(); await saveSettings(); }); parentBody.on('click', `.prompt-use-btn`, async function() { const index = parseInt(parent$(this).data('index')); const currentChar = TavernHelper.getCharData(); if (currentChar) { const charId = currentChar.avatar; const charName = currentChar.name; if (!settings.characterBindings) settings.characterBindings = {}; settings.characterBindings[charId] = index; settings.activePromptIndex = index; await saveSettings(); updateUIPanel(); logMessage(`操作: 已将角色 "<b>${charName}</b>" 绑定到预设 "<b>${settings.prompts[index].name}</b>"。`, 'success'); } }); parentBody.on('click', `.prompt-delete-btn`, async function() { const indexToDelete = parseInt(parent$(this).data('index')); if (settings.prompts.length <= 1) { logMessage('不能删除最后一个预设。', 'warn'); return; } if (confirm(`确定要删除预设 "${settings.prompts[indexToDelete].name}" 吗?`)) { settings.prompts.splice(indexToDelete, 1); if (settings.characterBindings) { const newBindings = {}; for (const charId in settings.characterBindings) { const boundIndex = settings.characterBindings[charId]; if (boundIndex === indexToDelete) continue; else if (boundIndex > indexToDelete) newBindings[charId] = boundIndex - 1; else newBindings[charId] = boundIndex; } settings.characterBindings = newBindings; } await applyCharacterBinding(); } }); parentBody.on('change', `.prompt-name-input, .prompt-content-textarea`, async function() { const index = parseInt(parent$(this).data('index')); const isName = parent$(this).hasClass('prompt-name-input'); if (isName) { settings.prompts[index].name = parent$(this).val(); } else { settings.prompts[index].content = parent$(this).val(); } await saveSettings(); }); if (typeof eventOn !== 'undefined' && typeof tavern_events !== 'undefined') { eventOn(tavern_events.GENERATION_ENDED, triggerSuggestionGeneration); eventOn(tavern_events.CHAT_CHANGED, applyCharacterBinding); } }
     
-    function init() { if (!parent$) { return; } cleanupOldUI(); injectStyles(); createAndInjectUI(); loadSettings().then(() => { bindEvents(); applyCharacterBinding(); logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success"); }); }
+    function init() { if (!parent$) { return; } cleanupOldUI(); injectStyles(); createAndInjectUI(); loadSettings().then(() => { bindEvents(); if (typeof SillyTavern === 'undefined' || typeof SillyTavern.substituteParams !== 'function') { logMessage(`<b>[错误]</b> 核心组件 SillyTavern 或 substituteParams 函数缺失，插件无法运行。`, 'error'); return; } applyCharacterBinding(); logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success"); }); }
     
-    if (typeof(window.parent.jQuery || window.parent.$) === 'function' && typeof TavernHelper !== 'undefined' && typeof TavernHelper.getCharData === 'function') { setTimeout(init, 2000); } else { console.error(`${LOG_PREFIX} 等待核心组件超时，脚本可能无法正常工作。`); }
+    if (typeof(window.parent.jQuery || window.parent.$) === 'function' && typeof SillyTavern !== 'undefined') { setTimeout(init, 2000); } else { console.error(`${LOG_PREFIX} 等待核心组件超时，脚本可能无法正常工作。`); }
 })();
