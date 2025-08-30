@@ -3,7 +3,7 @@
     const SETTINGS_KEY = 'AI指引助手10.0变量';
     const SUGGESTION_CONTAINER_ID = 'ai-reply-suggestion-container';
     const SUGGESTION_MODAL_ID = 'ai-reply-suggestion-modal';
-    const LOG_PREFIX = '[回复建议插件 v11]';
+    const LOG_PREFIX = '[回复建议插件]';
 
     const DEFAULT_PROMPTS = [
         {
@@ -1354,7 +1354,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '11';
+    const SCRIPT_VERSION = '4.4';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1384,7 +1384,39 @@
             console.error(`${LOG_PREFIX} [日志系统致命错误]`, loggingError);
         }
     }
-    
+
+    async function checkForUpdates() {
+    try {
+        const response = await fetch(`https://fastly.jsdelivr.net/gh/Sanjs333/sillytavern-scripts@main/version.json?t=${Date.now()}`);
+        if (!response.ok) return;
+
+        const latest = await response.json();
+        const currentVersion = parseFloat(SCRIPT_VERSION);
+        const latestVersion = parseFloat(latest.version);
+
+        if (latestVersion > currentVersion) {
+            showUpdateNotification(latest.version, latest.notes);
+        }
+    } catch (error) {
+        console.error('[AI指引助手] 检查更新失败:', error);
+    }
+}
+    function showUpdateNotification(version, notes) {
+    const $notifier = parent$('#sg-update-notifier');
+    const notifierHtml = `
+        <div class="update-info">
+            <strong>发现新版本 v${version}！</strong>
+            <div class="notes">${notes}</div>
+        </div>
+        <button id="sg-force-update-btn" class="sg-button primary">立即更新</button>
+    `;
+    $notifier.html(notifierHtml).css('display', 'flex');
+
+    parent$('body').off('click.update').on('click.update', '#sg-force-update-btn', function() {
+        parent$(this).text('更新中...').prop('disabled', true);
+    });
+}
+
     async function loadSettings() {
         if (typeof TavernHelper === 'undefined' || !TavernHelper.getVariables) {
             return; 
@@ -2023,7 +2055,28 @@ function showSuggestionModal(text) {
         .sg-css-editor-wrapper { display: flex; flex-direction: column; }
         .sg-css-editor-wrapper > .sg-css-label { flex-shrink: 0; }
         .sg-css-editor-wrapper > textarea { flex-grow: 1; width: 100%; min-height: 120px; resize: vertical; }
-        
+        #sg-update-notifier {
+    padding: 12px 16px;
+    background: color-mix(in srgb, var(--sg-accent) 20%, transparent);
+    border-bottom: 1px solid var(--sg-border);
+    display: none;
+    align-items: center;
+    gap: 15px;
+}
+#sg-update-notifier .update-info {
+    flex-grow: 1;
+}
+#sg-update-notifier .update-info strong {
+    font-size: 15px;
+    color: var(--sg-text);
+    display: block;
+    margin-bottom: 5px;
+}
+#sg-update-notifier .update-info .notes {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--sg-text-muted);
+}
         @media (min-width: 992px) { 
             #sg-css-editors-container { flex-direction: row; } 
             .sg-css-editor-wrapper {
@@ -2281,7 +2334,7 @@ async function testConnectionAndFetchModels() {
                 <div id="sg-extraction-tag-group" class="form-group sg-responsive-row" style="display:none;"><label for="sg-extraction-tag">要提取的标签名 (例如: content)</label><input type="text" id="sg-extraction-tag" placeholder="无需输入尖括号 < >"></div>
                 <div class="form-group sg-responsive-row"><label for="sg-enable-jailbreak" class="sg-jailbreak-label">启用破限</label><input type="checkbox" id="sg-enable-jailbreak" style="width: auto; height: auto;"></div>
             `;
-            const panelHeader = `<div class="panel-header"><h4>AI指引助手 v${SCRIPT_VERSION}</h4><div class="panel-header-actions" style="display: flex; align-items: center; gap: 20px;"><div style="display: flex; align-items: center; gap: 8px;"><label for="sg-global-enable-switch" style="margin: 0; font-size: 14px; color: var(--text-color-secondary);">自动建议</label><input type="checkbox" id="sg-global-enable-switch"></div><button class="panel-close-btn">×</button></div></div>`;
+            const panelHeader = `<div id="sg-update-notifier"></div><div class="panel-header"><h4>AI指引助手 v${SCRIPT_VERSION}</h4><div class="panel-header-actions" style="display: flex; align-items: center; gap: 20px;"><div style="display: flex; align-items: center; gap: 8px;"><label for="sg-global-enable-switch" style="margin: 0; font-size: 14px; color: var(--text-color-secondary);">自动建议</label><input type="checkbox" id="sg-global-enable-switch"></div><button class="panel-close-btn">×</button></div></div>`;
             const promptsPanelHtml = `
                 <div class="sg-panel-section">
                     <label>全局操作</label>
@@ -2554,7 +2607,7 @@ function bindCoreEvents() {
             cleanupSuggestions();
         }
     });
-    parentBody.on('click', `#${BUTTON_ID}`, (event) => { event.stopPropagation(); const $overlay = parent$(`#${OVERLAY_ID}`); $overlay.show(); const $panel = $overlay.find(`#${PANEL_ID}`); centerElement($panel[0]); updateApiPanel(); updatePromptsPanel(); updateAppearancePanel(); });
+    parentBody.on('click', `#${BUTTON_ID}`, (event) => { event.stopPropagation(); const $overlay = parent$(`#${OVERLAY_ID}`); $overlay.show(); const $panel = $overlay.find(`#${PANEL_ID}`); centerElement($panel[0]); updateApiPanel(); updatePromptsPanel(); updateAppearancePanel(); checkForUpdates(); });
     parentBody.on('click', `#${OVERLAY_ID}`, async function(e) { if (e.target.id === OVERLAY_ID || parent$(e.target).hasClass('panel-close-btn')) { parent$(`#${OVERLAY_ID}`).hide(); } });
     parent$(window.parent).on('resize', () => { if (parent$(`#${OVERLAY_ID}`).is(':visible')) { centerElement(parent$(`#${PANEL_ID}`)[0]); } });
     parentBody.on('click', `#${PANEL_ID} .panel-nav-item`, function() { const tab = parent$(this).data('tab'); parent$(`#${PANEL_ID} .panel-nav-item`).removeClass('active'); parent$(this).addClass('active'); parent$(`#${PANEL_ID} .panel-content`).removeClass('active'); parent$(`#sg-panel-${tab}, [data-tab-name='${tab}']`).addClass('active'); });
