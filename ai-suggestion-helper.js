@@ -924,6 +924,273 @@
 `.trim()
         },
         {
+            name: '奶酪小猫',
+            mainActionCss: `
+@import url("https://fontsapi.zeoseven.com/116/main/result.css");
+
+@keyframes kitty-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+#sg-manual-generate-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  width: 70px;
+  height: 70px;
+  transition: transform 0.2s ease;
+}
+
+#sg-manual-generate-btn .sg-btn-icon,
+#sg-manual-generate-btn .sg-btn-text {
+  display: none;
+}
+
+#sg-manual-generate-btn {
+  background-image: url('https://files.catbox.moe/r5kmyc.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+#sg-manual-generate-btn:hover {
+  transform: scale(1.1);
+}
+
+#sg-manual-generate-btn:disabled {
+  transform: scale(1);
+  background-image: url('https://files.catbox.moe/rw0tr8.png');
+  animation: kitty-breathe 2.5s infinite ease-in-out;
+  cursor: wait;
+}
+`.trim(),
+            suggestionCss: `
+.suggestion-capsule, 
+#sg-regenerate-btn {
+  font-family: "Kingnammm Maiyuan 2", sans-serif;
+  font-size: 15px;
+  background: #FFF8E1;
+  color: #A56A39;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  height: 38px;
+  box-shadow: 
+    3px 3px 6px rgba(217, 198, 165, 0.6), 
+    -3px -3px 6px rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.suggestion-capsule {
+  border-radius: 20px;
+  padding: 5px 16px;
+}
+
+#sg-regenerate-btn {
+  border-radius: 50%;
+  width: 38px;
+  padding: 0;
+}
+
+.suggestion-capsule:hover {
+  filter: brightness(1.05);
+}
+#sg-regenerate-btn:hover {
+  filter: brightness(1.05);
+}
+
+.suggestion-capsule:active {
+  color: #D2691E;
+  box-shadow: 
+    inset 2px 2px 4px rgba(217, 198, 165, 0.7), 
+    inset -2px -2px 4px rgba(255, 255, 255, 0.6);
+}
+#sg-regenerate-btn:active {
+  color: #D2691E;
+  box-shadow: 
+    inset 2px 2px 4px rgba(217, 198, 165, 0.7), 
+    inset -2px -2px 4px rgba(255, 255, 255, 0.6);
+}
+
+#sg-regenerate-btn i {
+  color: #A56A39;
+}
+`.trim()
+        },
+        {
+            name: '芝士就是力量',
+            mainActionCss: `
+@import url("https://fontsapi.zeoseven.com/116/main/result.css");
+
+@keyframes cheese-drip-flow {
+  0%, 100% {
+    top: 0px;
+    box-shadow:
+      -35px 0 0 #FFC107,
+      -5px 5px 0 #FFC107,
+      30px 2px 0 #FFC107;
+  }
+  50% {
+    top: 5px;
+    box-shadow:
+      -38px 0 0 #FFC107,
+      -3px 8px 0 #FFC107,
+      32px 4px 0 #FFC107;
+  }
+}
+
+@keyframes cheese-icon-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+#sg-manual-generate-btn {
+  position: relative;
+  width: 160px;
+  height: 40px;
+  background: #FFC107;
+  border: none;
+  border-radius: 25px 25px 15px 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(188, 129, 0, 0.2), inset 0 2px 2px #FFD54F;
+}
+
+#sg-manual-generate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(188, 129, 0, 0.3), inset 0 2px 2px #FFD54F;
+}
+
+#sg-manual-generate-btn::after {
+  content: '';
+  position: absolute;
+  width: 10px; height: 10px;
+  background: transparent;
+  border-radius: 50%;
+  left: 50%;
+  bottom: -5px;
+  box-shadow:
+      -35px 0 0 #FFC107,
+      -5px 5px 0 #FFC107,
+      30px 2px 0 #FFC107;
+  transition: top 0.2s ease;
+}
+
+#sg-manual-generate-btn:disabled::after {
+  position: relative;
+  animation: cheese-drip-flow 1.8s infinite ease-in-out;
+}
+
+#sg-manual-generate-btn .sg-btn-icon {
+  position: absolute;
+  top: -25px;
+  left: 10px;
+  width: 55px; height: 55px;
+  background-image: url('https://files.catbox.moe/uea4lp.png');
+  background-size: contain;
+  filter: drop-shadow(2px 3px 3px rgba(0,0,0,0.2));
+}
+
+#sg-manual-generate-btn:disabled .sg-btn-icon {
+  animation: cheese-icon-breathe 2s infinite ease-in-out;
+}
+
+#sg-manual-generate-btn .sg-btn-text {
+  font-size: 0;
+}
+
+#sg-manual-generate-btn .sg-btn-text::after {
+  content: "芝士就是力量！";
+  font-family: "Kingnammm Maiyuan 2", sans-serif;
+  font-size: 18px;
+  color: #8C5A2D;
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  text-shadow: 1px 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+#sg-manual-generate-btn:disabled .sg-btn-text::after {
+  content: "请等一会……";
+  right: 28px;
+}
+`.trim(),
+            suggestionCss: `
+.suggestion-capsule, 
+#sg-regenerate-btn {
+  font-family: "Kingnammm Maiyuan 2", sans-serif;
+  font-size: 15px;
+  background: linear-gradient(145deg, #FFD54F, #FFC107);
+  color: #795548;
+  border: none;
+  border-radius: 18px;
+  padding: 6px 18px;
+  height: 38px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  box-shadow: 0 2px 5px rgba(121, 85, 72, 0.2), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.suggestion-capsule::before {
+  content: '';
+  position: absolute;
+  top: -10px; left: -10px; right: -10px; bottom: -10px;
+  background: transparent;
+  z-index: -1;
+  box-shadow: 
+    inset 5px 8px 5px -2px rgba(251, 140, 0, 0.4),
+    inset -15px -12px 6px -3px rgba(251, 140, 0, 0.4),
+    inset 20px -5px 7px -2px rgba(251, 140, 0, 0.3),
+    inset -8px 20px 8px -4px rgba(251, 140, 0, 0.35),
+    inset 30px 15px 5px -3px rgba(251, 140, 0, 0.25);
+  border-radius: 50%;
+  opacity: 0.8;
+}
+
+.suggestion-capsule:hover, 
+#sg-regenerate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(121, 85, 72, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  filter: brightness(1.05);
+}
+
+.suggestion-capsule:active,
+#sg-regenerate-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 3px rgba(121, 85, 72, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  filter: brightness(0.95);
+}
+
+
+#sg-regenerate-btn {
+  padding: 0;
+  width: 38px;
+  border-radius: 50%;
+}
+
+#sg-regenerate-btn i {
+  color: #795548;
+}
+
+#sg-regenerate-btn::before {
+  content: '';
+  position: absolute;
+  top: -5px; left: -5px; right: -5px; bottom: -5px;
+  background: transparent;
+  z-index: -1;
+  box-shadow: 
+    inset 3px 4px 3px -1px rgba(251, 140, 0, 0.4),
+    inset -7px -6px 4px -2px rgba(251, 140, 0, 0.4);
+  border-radius: 50%;
+  opacity: 0.8;
+}
+`.trim()
+        },
+        {
             name: '琉璃浅光 (亮色)',
             mainActionCss: `
 @keyframes soft-glow-pulse {
@@ -1077,7 +1344,6 @@
     themeBindings: {},
     contextLength: 10,
     enableJailbreak: true,
-    directSend: false,
     extractionMode: 'strip_all',
     extractionTag: ''
 };
@@ -1169,7 +1435,6 @@
                     themeBindings: existingSettings.themeBindings || {},
                     contextLength: existingSettings.contextLength || 10,
                     enableJailbreak: existingSettings.enableJailbreak !== false,
-                    directSend: existingSettings.directSend === true,
                     extractionMode: existingSettings.extractionMode || 'strip_all',
                     extractionTag: existingSettings.extractionTag || ''
                 };
@@ -1491,30 +1756,41 @@ Number：{{roll 1d999999}}
         element.style.left = `${Math.max(0, (winWidth - elWidth) / 2)}px`; 
     }
     
-    function showSuggestionModal(text) { 
-        parent$(`#${SUGGESTION_MODAL_ID}`).remove(); 
-        const $modal = parent$(`<div id="${SUGGESTION_MODAL_ID}"><div class="sg-modal-content"><p class="sg-modal-text">${parent$('<div>').text(text).html()}</p><div class="sg-modal-actions"><button class="sg-button secondary sg-modal-button-close">关闭</button><button class="sg-button primary sg-modal-button-use">使用此建议</button></div></div></div>`); 
-        $modal.on('click', function(e) { if (e.target.id === SUGGESTION_MODAL_ID || parent$(e.target).hasClass('sg-modal-button-close')) $modal.remove(); }); 
-        $modal.find('.sg-modal-button-use').on('click', () => {
-    if (settings.directSend) {
+function showSuggestionModal(text) {
+    parent$(`#${SUGGESTION_MODAL_ID}`).remove();
+    const modalActionsHtml = `
+        <div class="sg-modal-actions">
+            <button class="sg-button secondary sg-modal-button-close">关闭</button>
+            <button class="sg-button secondary sg-modal-button-edit">填入并编辑</button>
+            <button class="sg-button primary sg-modal-button-send">直接发送</button>
+        </div>
+    `;
+
+    const $modal = parent$(`
+        <div id="${SUGGESTION_MODAL_ID}">
+            <div class="sg-modal-content">
+                <p class="sg-modal-text">${parent$('<div>').text(text).html()}</p>
+                ${modalActionsHtml}
+            </div>
+        </div>
+    `);
+
+    $modal.on('click', function(e) {
+        if (e.target.id === SUGGESTION_MODAL_ID || parent$(e.target).hasClass('sg-modal-button-close')) {
+            $modal.remove();
+        }
+    });
+
+    $modal.find('.sg-modal-button-send').on('click', () => {
         sendDirectlyAndCleanup(text);
-    } else {
+    });
+
+    $modal.find('.sg-modal-button-edit').on('click', () => {
         fillInputBoxAndCleanup(text);
-    }
-});
-        parent$('body').append($modal); 
-        centerElement($modal.find('.sg-modal-content')[0]); 
-    }
-    
-    function sendDirectlyAndCleanup(text) {
-    const $textarea = parent$('#send_textarea');
-    const $sendButton = parent$('#send_but');
-    if ($textarea.length > 0 && $sendButton.length > 0) {
-        $textarea.val(text);
-        $textarea.trigger('input');
-        $sendButton.click();
-    }
-    cleanupSuggestions();
+    });
+
+    parent$('body').append($modal);
+    centerElement($modal.find('.sg-modal-content')[0]);
 }
 
     function fillInputBoxAndCleanup(text) { 
@@ -1526,6 +1802,17 @@ Number：{{roll 1d999999}}
         cleanupSuggestions(); 
     }
     
+    function sendDirectlyAndCleanup(text) {
+    const $textarea = parent$('#send_textarea');
+    const $sendButton = parent$('#send_but');
+    if ($textarea.length > 0 && $sendButton.length > 0) {
+        $textarea.val(text);
+        $textarea.trigger('input'); 
+        $sendButton.click();
+    }
+    cleanupSuggestions();
+}
+
     function cleanupSuggestions() { 
         parent$(`#${SUGGESTION_CONTAINER_ID}`).remove(); 
         parent$(`#${SUGGESTION_MODAL_ID}`).remove();
@@ -1708,6 +1995,15 @@ Number：{{roll 1d999999}}
         .sg-modal-content { position: fixed; background: var(--sg-bg-glass); border: 1px solid var(--sg-border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 90%; max-width: 500px; padding: 32px; display: flex; flex-direction: column; gap: 24px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .sg-modal-text { margin: 0; padding: 0; font-size: 15px; line-height: 1.7; color: #EAEAEA; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; }
         .sg-modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
+        .sg-modal-actions .sg-modal-button-edit {
+    background: #c87baeaf;
+    color: white;
+    border: 1px solid #c87baeaf;
+}
+.sg-modal-actions .sg-modal-button-edit:hover {
+    background: #c87baeaf;
+    border-color: #c87baeaf;
+}
         #send_form { position: relative; }
         #sg-save-preset-name-btn.is-bound { background-color: #48BB78; color: white; border-color: #48BB78; }
         .sg-binding-status-display { font-size: 12px; color: var(--sg-text-muted); margin: 12px 0; padding: 6px 10px; background: var(--sg-bg-input); border-radius: 6px; text-align: center; border: 1px solid var(--sg-border); }
@@ -1984,7 +2280,6 @@ async function testConnectionAndFetchModels() {
                 </div>
                 <div id="sg-extraction-tag-group" class="form-group sg-responsive-row" style="display:none;"><label for="sg-extraction-tag">要提取的标签名 (例如: content)</label><input type="text" id="sg-extraction-tag" placeholder="无需输入尖括号 < >"></div>
                 <div class="form-group sg-responsive-row"><label for="sg-enable-jailbreak" class="sg-jailbreak-label">启用破限</label><input type="checkbox" id="sg-enable-jailbreak" style="width: auto; height: auto;"></div>
-                <div class="form-group sg-responsive-row"><label for="sg-direct-send" title="勾选后，点击建议将直接发送，而不是填入输入框。">直接发送建议</label><input type="checkbox" id="sg-direct-send" style="width: auto; height: auto;"></div>
             `;
             const panelHeader = `<div class="panel-header"><h4>AI指引助手 v${SCRIPT_VERSION}</h4><div class="panel-header-actions" style="display: flex; align-items: center; gap: 20px;"><div style="display: flex; align-items: center; gap: 8px;"><label for="sg-global-enable-switch" style="margin: 0; font-size: 14px; color: var(--text-color-secondary);">自动建议</label><input type="checkbox" id="sg-global-enable-switch"></div><button class="panel-close-btn">×</button></div></div>`;
             const promptsPanelHtml = `
@@ -2179,7 +2474,6 @@ ${prefixedSuggestionCss}
         $panel.find('#sg-base-url').val(activeProfile.baseUrl); 
         $panel.find('#sg-context-length').val(settings.contextLength);
         $panel.find('#sg-enable-jailbreak').prop('checked', settings.enableJailbreak);
-        $panel.find('#sg-direct-send').prop('checked', settings.directSend);
         $panel.find('#sg-extraction-mode').val(settings.extractionMode);
         $panel.find('#sg-extraction-tag').val(settings.extractionTag);
         if (settings.extractionMode === 'extract_by_tag') { $panel.find('#sg-extraction-tag-group').show(); } else { $panel.find('#sg-extraction-tag-group').hide(); }
@@ -2251,11 +2545,6 @@ function bindCoreEvents() {
         triggerSuggestionGeneration();
         parent$('#send_textarea').focus();
     });
-    parentBody.on('change', '#sg-direct-send', async function() {
-    settings.directSend = parent$(this).is(':checked');
-    await saveSettings();
-    logMessage(`直接发送功能已<b>${settings.directSend ? '启用' : '禁用'}</b>。`, 'info');
-    });
     parentBody.on('change', '#sg-global-enable-switch', async function() {
         settings.isGloballyEnabled = parent$(this).is(':checked');
         await saveSettings();
@@ -2315,17 +2604,45 @@ function bindCoreEvents() {
     parentBody.on('click', '#sg-save-theme-name-btn', async function() { const newName = parent$('#sg-theme-name-input').val(); if (newName) { settings.buttonThemes[settings.activeButtonThemeIndex].name = newName; await saveSettings(); updateAppearancePanel(); logMessage('主题名称已保存。', 'success'); } });
     parentBody.on('input', '#sg-main-action-css', async function() { settings.buttonThemes[settings.activeButtonThemeIndex].mainActionCss = $(this).val(); await saveSettings(); applyButtonTheme(); });
     parentBody.on('input', '#sg-suggestion-css', async function() { settings.buttonThemes[settings.activeButtonThemeIndex].suggestionCss = $(this).val(); await saveSettings(); applyButtonTheme(); });
-    parentBody.on('click', '#sg-add-theme-btn', async () => {
-        const newTheme = {
-            name: '新主题',
-            mainActionCss: `/* --- 主题创作指南 ---\\n在这里为“立即生成”按钮编写CSS。\\n\\n- 目标选择器: #sg-manual-generate-btn\\n- 悬停效果: #sg-manual-generate-btn:hover\\n\\n🎨 添加图标示例 (使用Font Awesome 6):\\n#sg-manual-generate-btn .sg-btn-icon::before {\\n  font-family: 'Font Awesome 6 Free';\\n  font-weight: 900;\\n  content: '\\\\f0d0'; /* 这是魔法棒图标 */\\n  margin-right: 8px;\\n}\\n*/`,
-            suggestionCss: `/* --- 主题创作指南 ---\\n在这里为AI生成的“建议胶囊”按钮和“刷新”按钮编写CSS。\\n\\n- 建议胶囊选择器: .suggestion-capsule\\n- 刷新按钮选择器: #sg-regenerate-btn\\n- 悬停效果: .suggestion-capsule:hover, #sg-regenerate-btn:hover\\n\\n🎨 示例:\\n.suggestion-capsule {\\n  border-radius: 4px;\\n  background: #334155;\\n}\\n#sg-regenerate-btn {\\n  background: #94a3b8;\\n}\\n*/`
-        };
-        settings.buttonThemes.push(newTheme);
-        settings.activeButtonThemeIndex = settings.buttonThemes.length - 1;
-        await saveSettings();
-        updateAppearancePanel();
-    });
+parentBody.on('click', '#sg-add-theme-btn', async () => {
+    const newTheme = {
+        name: '新主题',
+        mainActionCss: `/* --- 主题创作指南 ---
+在这里为“立即生成”按钮编写CSS。
+
+- 目标选择器: #sg-manual-generate-btn
+- 悬停效果: #sg-manual-generate-btn:hover
+
+🎨 添加图标示例 (使用Font Awesome 6):
+#sg-manual-generate-btn .sg-btn-icon::before {
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  content: '\\f0d0'; /* 这是魔法棒图标 */
+  margin-right: 8px;
+}
+*/`,
+        suggestionCss: `/* --- 主题创作指南 ---
+在这里为AI生成的“建议胶囊”按钮和“刷新”按钮编写CSS。
+
+- 建议胶囊选择器: .suggestion-capsule
+- 刷新按钮选择器: #sg-regenerate-btn
+- 悬停效果: .suggestion-capsule:hover, #sg-regenerate-btn:hover
+
+🎨 示例:
+.suggestion-capsule {
+  border-radius: 4px;
+  background: #334155;
+}
+#sg-regenerate-btn {
+  background: #94a3b8;
+}
+*/`
+    };
+    settings.buttonThemes.push(newTheme);
+    settings.activeButtonThemeIndex = settings.buttonThemes.length - 1;
+    await saveSettings();
+    updateAppearancePanel();
+});
     parentBody.on('click', '#sg-duplicate-theme-btn', async () => { const currentTheme = settings.buttonThemes[settings.activeButtonThemeIndex]; const newTheme = JSON.parse(JSON.stringify(currentTheme)); newTheme.name += ' - 副本'; settings.buttonThemes.splice(settings.activeButtonThemeIndex + 1, 0, newTheme); settings.activeButtonThemeIndex++; await saveSettings(); updateAppearancePanel(); });
     parentBody.on('click', '#sg-delete-theme-btn', async () => { if (settings.buttonThemes.length <= 1) { logMessage('不能删除最后一个主题。', 'warn'); return; } if (confirm(`确定要删除主题 \"${settings.buttonThemes[settings.activeButtonThemeIndex].name}\" 吗?`)) { settings.buttonThemes.splice(settings.activeButtonThemeIndex, 1); settings.activeButtonThemeIndex = Math.max(0, settings.activeButtonThemeIndex - 1); await saveSettings(); updateAppearancePanel(); applyButtonTheme(); } });
     parentBody.on('click', '#sg-export-one-theme-btn', () => { try { const themeToExport = settings.buttonThemes[settings.activeButtonThemeIndex]; const dataStr = JSON.stringify(themeToExport, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = parentDoc.createElement('a'); a.href = url; a.download = `${themeToExport.name}.json`; a.click(); URL.revokeObjectURL(url); logMessage(`主题 \"${themeToExport.name}\" 已成功导出。`, 'success'); } catch (error) { logMessage(`导出主题时出错: ${error.message}`, 'error'); } });
