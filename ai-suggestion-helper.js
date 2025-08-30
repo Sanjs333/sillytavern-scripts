@@ -1363,6 +1363,8 @@
     const parentDoc = window.parent.document;
     const parent$ = window.parent.jQuery || window.parent.$;
 
+    let isCheckingForUpdates = false;
+
     function logMessage(message, type = 'info') { 
         try {
             const logPanel = parent$(`#${LOG_PANEL_ID}`); 
@@ -1386,9 +1388,19 @@
     }
 
     async function checkForUpdates() {
+    if (isCheckingForUpdates) {
+        logMessage('更新检查已在进行中，请稍候...', 'warn');
+        return null;
+    }
+
+    isCheckingForUpdates = true;
+
     try {
         const response = await fetch(`https://fastly.jsdelivr.net/gh/Sanjs333/sillytavern-scripts@main/version.json?t=${Date.now()}`);
-        if (!response.ok) return;
+        if (!response.ok) {
+            logMessage('检查更新失败：无法连接到版本服务器。', 'error');
+            return false;
+        }
 
         const latest = await response.json();
         const currentVersion = parseFloat(SCRIPT_VERSION);
@@ -1396,11 +1408,20 @@
 
         if (latestVersion > currentVersion) {
             showUpdateNotification(latest.version, latest.notes);
+            return true;
+        } else {
+            logMessage('已经是最新版本。', 'success');
+            return false;
         }
     } catch (error) {
+        logMessage(`检查更新失败: ${error.message}`, 'error');
         console.error('[AI指引助手] 检查更新失败:', error);
+        return false;
+    } finally {
+        isCheckingForUpdates = false;
     }
 }
+
     function showUpdateNotification(version, notes) {
     const $notifier = parent$('#sg-update-notifier');
     const notifierHtml = `
@@ -1408,12 +1429,37 @@
             <strong>发现新版本 v${version}！</strong>
             <div class="notes">${notes}</div>
         </div>
-        <button id="sg-force-update-btn" class="sg-button primary">立即更新</button>
+        <button id="sg-force-update-btn" class="sg-button primary">更新并刷新</button>
     `;
     $notifier.html(notifierHtml).css('display', 'flex');
 
     parent$('body').off('click.update').on('click.update', '#sg-force-update-btn', function() {
-        parent$(this).text('更新中...').prop('disabled', true);
+        const $btn = parent$(this);
+        $btn.text('更新中...').prop('disabled', true);
+
+        (async () => {
+            try {
+                const repo = 'Sanjs333/sillytavern-scripts';
+                const branch = 'main';
+                const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
+                
+                const apiUrl = `https://api.github.com/repos/${repo}/commits/${branch}`;
+                const response = await fetch(apiUrl, { cache: 'no-store' });
+                if (response.ok) {
+                    const commitData = await response.json();
+                    const latestCommitHash = commitData.sha;
+                    const data = { hash: latestCommitHash, timestamp: Date.now() };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                    console.log('[AI指引助手 更新程序] 已将最新版本信息写入缓存，准备刷新。');
+                }
+            } catch (e) {
+                console.error('[AI指引助手 更新程序] 写入缓存失败，但仍将尝试刷新。', e);
+            } finally {
+                setTimeout(() => {
+                    window.parent.location.reload();
+                }, 300);
+            }
+        })();
     });
 }
 
@@ -2334,7 +2380,7 @@ async function testConnectionAndFetchModels() {
                 <div id="sg-extraction-tag-group" class="form-group sg-responsive-row" style="display:none;"><label for="sg-extraction-tag">要提取的标签名 (例如: content)</label><input type="text" id="sg-extraction-tag" placeholder="无需输入尖括号 < >"></div>
                 <div class="form-group sg-responsive-row"><label for="sg-enable-jailbreak" class="sg-jailbreak-label">启用破限</label><input type="checkbox" id="sg-enable-jailbreak" style="width: auto; height: auto;"></div>
             `;
-            const panelHeader = `<div id="sg-update-notifier"></div><div class="panel-header"><h4>AI指引助手 v${SCRIPT_VERSION}</h4><div class="panel-header-actions" style="display: flex; align-items: center; gap: 20px;"><div style="display: flex; align-items: center; gap: 8px;"><label for="sg-global-enable-switch" style="margin: 0; font-size: 14px; color: var(--text-color-secondary);">自动建议</label><input type="checkbox" id="sg-global-enable-switch"></div><button class="panel-close-btn">×</button></div></div>`;
+            const panelHeader = `<div id="sg-update-notifier"></div><div class="panel-header"><h4>AI指引助手 v${SCRIPT_VERSION}</h4><div class="panel-header-actions" style="display: flex; align-items: center; gap: 20px;"><button id="sg-check-for-updates-btn" class="sg-button secondary sg-icon-btn" title="检查更新"><i class="fa-solid fa-cloud-arrow-down"></i></button><div style="display: flex; align-items: center; gap: 8px;"><label for="sg-global-enable-switch" style="margin: 0; font-size: 14px; color: var(--text-color-secondary);">自动建议</label><input type="checkbox" id="sg-global-enable-switch"></div><button class="panel-close-btn">×</button></div></div>`;
             const promptsPanelHtml = `
                 <div class="sg-panel-section">
                     <label>全局操作</label>
@@ -2607,7 +2653,30 @@ function bindCoreEvents() {
             cleanupSuggestions();
         }
     });
-    parentBody.on('click', `#${BUTTON_ID}`, (event) => { event.stopPropagation(); const $overlay = parent$(`#${OVERLAY_ID}`); $overlay.show(); const $panel = $overlay.find(`#${PANEL_ID}`); centerElement($panel[0]); updateApiPanel(); updatePromptsPanel(); updateAppearancePanel(); checkForUpdates(); });
+    parentBody.on('click', '#sg-check-for-updates-btn', async function() {
+    const $btn = $(this);
+    const $icon = $btn.find('i');
+
+    if (isCheckingForUpdates) return;
+    
+    $btn.prop('disabled', true);
+    $icon.removeClass('fa-cloud-arrow-down fa-check').addClass('fa-spinner fa-spin');
+
+    const hasUpdate = await checkForUpdates();
+
+    $icon.removeClass('fa-spinner fa-spin');
+    
+    if (hasUpdate === false) {
+        $icon.addClass('fa-check');
+        setTimeout(() => {
+            $icon.removeClass('fa-check').addClass('fa-cloud-arrow-down');
+            $btn.prop('disabled', false);
+        }, 2000);
+    } else {
+        $icon.addClass('fa-cloud-arrow-down');
+        $btn.prop('disabled', false);
+    }
+});
     parentBody.on('click', `#${OVERLAY_ID}`, async function(e) { if (e.target.id === OVERLAY_ID || parent$(e.target).hasClass('panel-close-btn')) { parent$(`#${OVERLAY_ID}`).hide(); } });
     parent$(window.parent).on('resize', () => { if (parent$(`#${OVERLAY_ID}`).is(':visible')) { centerElement(parent$(`#${PANEL_ID}`)[0]); } });
     parentBody.on('click', `#${PANEL_ID} .panel-nav-item`, function() { const tab = parent$(this).data('tab'); parent$(`#${PANEL_ID} .panel-nav-item`).removeClass('active'); parent$(this).addClass('active'); parent$(`#${PANEL_ID} .panel-content`).removeClass('active'); parent$(`#sg-panel-${tab}, [data-tab-name='${tab}']`).addClass('active'); });
@@ -2811,6 +2880,7 @@ function init() {
         
         logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success"); 
         testConnectionAndFetchModels();
+        checkForUpdates();
     }); 
 }
     
