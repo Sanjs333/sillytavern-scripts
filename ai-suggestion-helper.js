@@ -1565,7 +1565,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.0';
+    const SCRIPT_VERSION = '5.01';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -3205,4 +3205,5 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
+
 
