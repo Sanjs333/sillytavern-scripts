@@ -1190,6 +1190,119 @@
 }
 `.trim()
         },
+{
+    name: '浅粉',
+    mainActionCss: `
+@keyframes gentle-throb {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(255, 182, 193, 0.4), 0 0 12px rgba(255, 105, 180, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 16px rgba(255, 182, 193, 0.7), 0 0 24px rgba(255, 105, 180, 0.5);
+    transform: scale(1.03);
+  }
+}
+
+@keyframes spin-heart {
+    0% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(10deg) scale(1.1); }
+    75% { transform: rotate(-10deg) scale(1.1); }
+    100% { transform: rotate(0deg) scale(1); }
+}
+
+#sg-manual-generate-btn {
+    background: linear-gradient(145deg, #ffdde1, #ffc0cb);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    color: #8b576e !important;
+    width: 42px;
+    height: 38px;
+    border-radius: 19px;
+    padding: 0;
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(255, 182, 193, 0.3);
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#sg-manual-generate-btn::before {
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    content: '♡';
+    font-size: 16px;
+    text-shadow: 0 0 5px rgba(255,255,255,0.7);
+    margin: 0;
+}
+
+#sg-manual-generate-btn .sg-btn-text {
+    font-size: 0;
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+#sg-manual-generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 182, 193, 0.5);
+}
+
+#sg-manual-generate-btn:active {
+    transform: translateY(0);
+    filter: brightness(0.95);
+}
+
+#sg-manual-generate-btn:disabled {
+    cursor: wait;
+    animation: gentle-throb 2s infinite ease-in-out;
+}
+
+#sg-manual-generate-btn:disabled::before {
+     animation: spin-heart 1s infinite ease-in-out;
+}
+
+#sg-manual-generate-btn:disabled .sg-btn-text {
+    display: none;
+}
+`.trim(),
+    suggestionCss: `
+.suggestion-capsule, #sg-regenerate-btn {
+    background: rgba(255, 228, 235, 0.7);
+    border: 1px solid rgba(255, 182, 193, 0.8);
+    color: #9e6378;
+    height: 34px;
+    border-radius: 17px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 500;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 2px 5px rgba(231, 160, 175, 0.2);
+}
+
+#sg-regenerate-btn {
+    width: 34px;
+    padding: 0;
+    border-radius: 50%;
+}
+
+.suggestion-capsule:hover, #sg-regenerate-btn:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: #d63384;
+    border-color: #ffc0cb;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(255, 105, 180, 0.4);
+}
+
+#sg-regenerate-btn:hover {
+    transform: translateY(-2px) scale(1.05) rotate(180deg);
+}
+`.trim()
+},
         {
             name: '琉璃浅光 (亮色)',
             mainActionCss: `
@@ -1354,7 +1467,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.5';
+    const SCRIPT_VERSION = '4.6';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -2915,8 +3028,6 @@ function initUI() {
     
     testConnectionAndFetchModels();
     checkForUpdates();
-    
-    console.log('%c[更新成功!] 这是 v4.5 版本独有的日志!', 'color: lime; font-size: 16px; font-weight: bold;');
     
     logMessage(`AI指引助手 v${SCRIPT_VERSION} 界面初始化完成。`, "success");
 }
