@@ -7,7 +7,7 @@
 
     const DEFAULT_PROMPTS = [
         {
-            name: '三角协议 (默认)',
+            name: '三角协议',
             content: `
 # 任务
 根据对话上下文，为用户生成三条富有创意、推动剧情发展的回复建议。
@@ -3205,3 +3205,4 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
+
