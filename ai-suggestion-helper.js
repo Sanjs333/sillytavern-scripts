@@ -2663,7 +2663,9 @@ function bindCoreEvents() {
         updatePromptsPanel(); 
         updateAppearancePanel(); 
     });
-    parentBody.on('click', '#sg-check-for-updates-btn', async function() {
+    parentBody.on('click', '#sg-check-for-updates-btn', async function(event) {
+    event.preventDefault();
+    
     const $btn = $(this);
     const $icon = $btn.find('i');
 
