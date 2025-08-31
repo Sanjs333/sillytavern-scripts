@@ -1564,7 +1564,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.7';
+    const SCRIPT_VERSION = '4.8';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1630,7 +1630,8 @@
 
     function showUpdateNotification(latest) {
     const version = latest.version;
-    const notes = latest.notes;
+    let notes = latest.notes;
+    notes += '<br><b>注意：点击更新后，插件将自动刷新整个页面以应用新版本。</b>';
     const latestCommitHash = latest.commit;
 
     const $notifier = parent$('#sg-update-notifier');
@@ -2870,7 +2871,12 @@ function bindCoreEvents() {
     });
     parentBody.on('click', '#sg-check-for-updates-btn', async function(event) {
     event.preventDefault();
-    
+    if (parent$('#sg-update-notifier').is(':visible')) {
+        logMessage('已检测到更新，将直接触发更新流程...', 'info');
+        parent$('#sg-force-update-btn').trigger('click');
+        return;
+    }
+
     const $btn = $(this);
     const $icon = $btn.find('i');
 
@@ -2878,18 +2884,16 @@ function bindCoreEvents() {
     
     $btn.prop('disabled', true);
     $icon.removeClass('fa-cloud-arrow-down fa-check').addClass('fa-spinner fa-spin');
-
     const hasUpdate = await checkForUpdates();
-
     $icon.removeClass('fa-spinner fa-spin');
-    
     if (hasUpdate === false) {
         $icon.addClass('fa-check');
         setTimeout(() => {
             $icon.removeClass('fa-check').addClass('fa-cloud-arrow-down');
             $btn.prop('disabled', false);
         }, 2000);
-    } else {
+    } 
+    else {
         $icon.addClass('fa-cloud-arrow-down');
         $btn.prop('disabled', false);
     }
