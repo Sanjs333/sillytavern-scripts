@@ -1546,6 +1546,7 @@
         }
     ],
     activeApiProfileIndex: 0,
+    defaultPromptIndex: 0,
     isGloballyEnabled: true,
     characterBindings: {},
     prompts: JSON.parse(JSON.stringify(DEFAULT_PROMPTS)),
@@ -1564,7 +1565,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.9';
+    const SCRIPT_VERSION = '5.0';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1713,6 +1714,7 @@
                 settings = {
                     ...settings,
                     ...existingSettings,
+                    defaultPromptIndex: existingSettings.defaultPromptIndex || 0,
                     prompts: finalPrompts,
                     buttonThemes: finalThemes,
                     characterBindings: existingSettings.characterBindings || {},
@@ -2182,7 +2184,7 @@ function showSuggestionModal(text) {
         if (!currentChar) return; 
         const charId = currentChar.avatar; 
         const charName = currentChar.name; 
-        let targetIndex = 0; 
+        let targetIndex = settings.defaultPromptIndex || 0; 
         let isBound = false; 
         if (settings.characterBindings && settings.characterBindings.hasOwnProperty(charId)) { 
             const boundIndex = settings.characterBindings[charId]; 
@@ -2284,9 +2286,17 @@ function showSuggestionModal(text) {
     color: white;
     border: 1px solid #c87baeaf;
 }
-.sg-modal-actions .sg-modal-button-edit:hover {
+        .sg-modal-actions .sg-modal-button-edit:hover {
     background: #c87baeaf;
     border-color: #c87baeaf;
+}
+        #sg-set-default-preset-btn.is-default {
+    background-color: #F6E05E;
+    color: #975A16;
+    border-color: #F6E05E;
+}
+        #sg-set-default-preset-btn.is-default i {
+    font-weight: 900; 
 }
         #send_form { position: relative; }
         #sg-save-preset-name-btn.is-bound { background-color: #48BB78; color: white; border-color: #48BB78; }
@@ -2315,19 +2325,38 @@ function showSuggestionModal(text) {
     align-items: center;
     gap: 15px;
 }
-#sg-update-notifier .update-info {
+        #sg-update-notifier .sg-button {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+        #sg-update-notifier .update-info {
     flex-grow: 1;
 }
-#sg-update-notifier .update-info strong {
+        #sg-update-notifier .update-info strong {
     font-size: 15px;
     color: var(--sg-text);
     display: block;
     margin-bottom: 5px;
 }
-#sg-update-notifier .update-info .notes {
+        #sg-update-notifier .update-info .notes {
     font-size: 12px;
     line-height: 1.5;
     color: var(--sg-text-muted);
+}
+.sg-subtle-hint {
+    font-size: 12px;
+    color: var(--sg-text-muted);
+    margin-top: 12px;
+    text-align: center;
+    max-width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+.sg-subtle-hint i {
+    color: var(--sg-accent);
+    margin: 0 2px;
+    font-weight: 600;
 }
         @media (min-width: 992px) { 
             #sg-css-editors-container { flex-direction: row; } 
@@ -2604,11 +2633,13 @@ function showSuggestionModal(text) {
                     <div class="sg-actions-bar">
                         <div class="input-with-button"><input type="text" id="sg-preset-name-input" placeholder="当前预设名称"><button id="sg-save-preset-name-btn" class="sg-button primary sg-icon-btn" title="保存名称修改"><i class="fa-solid fa-check"></i></button></div>
                         <div class="sg-button-group">
+                            <button id="sg-set-default-preset-btn" class="sg-button secondary sg-icon-btn" title="将当前预设设为默认"><i class="fa-regular fa-star"></i></button>
                             <button id="sg-duplicate-preset-btn" class="sg-button secondary sg-icon-btn" title="复制当前预设"><i class="fa-solid fa-copy"></i></button>
                             <button id="sg-export-one-preset-btn" class="sg-button secondary sg-icon-btn" title="导出当前预设"><i class="fa-solid fa-file-export"></i></button>
                             <button id="sg-delete-preset-btn" class="sg-button danger sg-icon-btn" title="删除当前预设"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </div>
+                    <p id="sg-default-preset-hint" class="sg-subtle-hint">提示：默认预设无法取消，需选择其他预设并点击<i class="fa-regular fa-star"></i>按钮更改。</p>
                     <textarea id="sg-preset-content-textarea" placeholder="预设内容..."></textarea>
                 </div>
                 <input type="file" id="sg-prompt-file-input" style="display: none;" accept=".json">
@@ -2787,57 +2818,73 @@ ${prefixedSuggestionCss}
         setTimeout(() => testConnectionAndFetchModels(), 100); 
     }
     function updatePromptsPanel() {
-        const $panel = parent$(`#${PANEL_ID}`);
-        const $presetSelect = $panel.find('#sg-preset-select').empty();
-        if (settings.prompts && settings.prompts.length > 0) {
-            settings.prompts.forEach((prompt, index) => {
-                $presetSelect.append(`<option value="${index}">${prompt.name}</option>`);
-            });
-            if (settings.activePromptIndex >= settings.prompts.length || settings.activePromptIndex < 0) {
-                settings.activePromptIndex = 0;
-            }
-            $presetSelect.val(settings.activePromptIndex);
-            const activePrompt = settings.prompts[settings.activePromptIndex];
-            if (activePrompt) {
-                $panel.find('#sg-preset-name-input').val(activePrompt.name);
-                $panel.find('#sg-preset-content-textarea').val(activePrompt.content);
-            } else {
-                $panel.find('#sg-preset-name-input').val('');
-                $panel.find('#sg-preset-content-textarea').val('');
-            }
+    const $panel = parent$(`#${PANEL_ID}`);
+    const $presetSelect = $panel.find('#sg-preset-select').empty();
+
+    if (settings.prompts && settings.prompts.length > 0) {
+        settings.prompts.forEach((prompt, index) => {
+            const isDefault = (index === settings.defaultPromptIndex);
+            const displayName = `${prompt.name}${isDefault ? ' (默认)' : ''}`;
+            $presetSelect.append(`<option value="${index}">${displayName}</option>`);
+        });
+
+        if (settings.activePromptIndex >= settings.prompts.length || settings.activePromptIndex < 0) {
+            settings.activePromptIndex = settings.defaultPromptIndex || 0;
+        }
+        $presetSelect.val(settings.activePromptIndex);
+
+        const activePrompt = settings.prompts[settings.activePromptIndex];
+        if (activePrompt) {
+            $panel.find('#sg-preset-name-input').val(activePrompt.name);
+            $panel.find('#sg-preset-content-textarea').val(activePrompt.content);
         } else {
-            $presetSelect.append('<option>无可用预设</option>');
             $panel.find('#sg-preset-name-input').val('');
             $panel.find('#sg-preset-content-textarea').val('');
         }
-        const $saveBtn = $panel.find('#sg-save-preset-name-btn');
-        const $statusDisplay = $panel.find('#sg-binding-status');
-        const currentChar = TavernHelper.getCharData();
-        if (currentChar) {
-            const charId = currentChar.avatar;
-            const charName = currentChar.name;
-            const activePresetIndex = settings.activePromptIndex;
-            if (settings.characterBindings[charId] === activePresetIndex) {
-                $saveBtn.addClass('is-bound').attr('title', `保存名称并解除与 "${charName}" 的绑定`);
-                $saveBtn.find('i').removeClass('fa-check').addClass('fa-unlink');
-                $statusDisplay.html(`此预设已绑定到当前角色: <b>${charName}</b>`);
-            } else {
-                $saveBtn.removeClass('is-bound').attr('title', `保存名称并将此预设绑定到 "${charName}"`);
-                $saveBtn.find('i').removeClass('fa-unlink').addClass('fa-check');
-                if (settings.characterBindings.hasOwnProperty(charId)) {
-                    const boundPresetIndex = settings.characterBindings[charId];
-                    const boundPresetName = settings.prompts[boundPresetIndex] ? settings.prompts[boundPresetIndex].name : '一个已被删除的预设';
-                    $statusDisplay.html(`当前角色 "<b>${charName}</b>" 已绑定到: "<b>${boundPresetName}</b>"`);
-                } else {
-                    $statusDisplay.html(`当前角色 "<b>${charName}</b>" 未绑定任何预设。`);
-                }
-            }
-            $saveBtn.prop('disabled', false);
-        } else {
-            $saveBtn.prop('disabled', true).removeClass('is-bound').attr('title', '没有活动的聊天角色');
-            $statusDisplay.text('没有活动的聊天角色');
-        }
+
+    } else {
+        $presetSelect.append('<option>无可用预设</option>');
+        $panel.find('#sg-preset-name-input').val('');
+        $panel.find('#sg-preset-content-textarea').val('');
     }
+
+    const $setDefaultBtn = $panel.find('#sg-set-default-preset-btn');
+    if (settings.activePromptIndex === settings.defaultPromptIndex) {
+        $setDefaultBtn.addClass('is-default').attr('title', '当前预设已是默认');
+        $setDefaultBtn.prop('disabled', true);
+    } else {
+        $setDefaultBtn.removeClass('is-default').attr('title', '将当前预设设为默认');
+        $setDefaultBtn.prop('disabled', false);
+    }
+
+    const $saveBtn = $panel.find('#sg-save-preset-name-btn');
+    const $statusDisplay = $panel.find('#sg-binding-status');
+    const currentChar = TavernHelper.getCharData();
+    if (currentChar) {
+        const charId = currentChar.avatar;
+        const charName = currentChar.name;
+        const activePresetIndex = settings.activePromptIndex;
+        if (settings.characterBindings[charId] === activePresetIndex) {
+            $saveBtn.addClass('is-bound').attr('title', `保存名称并解除与 "${charName}" 的绑定`);
+            $saveBtn.find('i').removeClass('fa-check').addClass('fa-unlink');
+            $statusDisplay.html(`此预设已绑定到当前角色: <b>${charName}</b>`);
+        } else {
+            $saveBtn.removeClass('is-bound').attr('title', `保存名称并将此预设绑定到 "${charName}"`);
+            $saveBtn.find('i').removeClass('fa-unlink').addClass('fa-check');
+            if (settings.characterBindings.hasOwnProperty(charId)) {
+                const boundPresetIndex = settings.characterBindings[charId];
+                const boundPresetName = settings.prompts[boundPresetIndex] ? settings.prompts[boundPresetIndex].name : '一个已被删除的预设';
+                $statusDisplay.html(`当前角色 "<b>${charName}</b>" 已绑定到: "<b>${boundPresetName}</b>"`);
+            } else {
+                $statusDisplay.html(`当前角色 "<b>${charName}</b>" 未绑定任何预设。`);
+            }
+        }
+        $saveBtn.prop('disabled', false);
+    } else {
+        $saveBtn.prop('disabled', true).removeClass('is-bound').attr('title', '没有活动的聊天角色');
+        $statusDisplay.text('没有活动的聊天角色');
+    }
+}
     
 function bindCoreEvents() {
     const parentBody = parent$('body');
@@ -2941,6 +2988,15 @@ function bindCoreEvents() {
     parentBody.on('click', '#sg-save-preset-name-btn', async function() { const newName = parent$('#sg-preset-name-input').val(); if (newName) { settings.prompts[settings.activePromptIndex].name = newName; logMessage('预设名称已保存。', 'success'); } const currentChar = TavernHelper.getCharData(); if (currentChar) { const charId = currentChar.avatar; const charName = currentChar.name; const activePresetIndex = settings.activePromptIndex; if (settings.characterBindings[charId] === activePresetIndex) { delete settings.characterBindings[charId]; logMessage(`已解除预设 \"<b>${newName}</b>\" 与角色 \"<b>${charName}</b>\" 的绑定。`, 'success'); } else { settings.characterBindings[charId] = activePresetIndex; logMessage(`已将预设 \"<b>${newName}</b>\" 绑定到角色 \"<b>${charName}</b>\"。`, 'success'); } } else { logMessage('无法获取当前角色信息，仅保存名称。', 'warn'); } await saveSettings(); updatePromptsPanel(); });
     parentBody.on('input', '#sg-preset-content-textarea', async (e) => { settings.prompts[settings.activePromptIndex].content = $(e.target).val(); await saveSettings(); });
     parentBody.on('click', '#sg-duplicate-preset-btn', async () => { const currentPrompt = settings.prompts[settings.activePromptIndex]; const newPrompt = JSON.parse(JSON.stringify(currentPrompt)); newPrompt.name += ' - 副本'; settings.prompts.splice(settings.activePromptIndex + 1, 0, newPrompt); settings.activePromptIndex++; await saveSettings(); updatePromptsPanel(); });
+    parentBody.on('click', '#sg-set-default-preset-btn', async () => {
+        const selectedIndex = parseInt(parent$('#sg-preset-select').val());
+        if (!isNaN(selectedIndex) && selectedIndex < settings.prompts.length) {
+            settings.defaultPromptIndex = selectedIndex;
+            await saveSettings();
+            logMessage(`已将 "<b>${settings.prompts[selectedIndex].name}</b>" 设为新的默认预设。`, 'success');
+            updatePromptsPanel();
+        }
+    });
     parentBody.on('click', '#sg-export-one-preset-btn', () => { try { const promptToExport = settings.prompts[settings.activePromptIndex]; const dataStr = JSON.stringify(promptToExport, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = parentDoc.createElement('a'); a.href = url; a.download = `${promptToExport.name}.json`; a.click(); URL.revokeObjectURL(url); logMessage(`预设 \"${promptToExport.name}\" 已成功导出。`, 'success'); } catch (error) { logMessage(`导出预设时出错: ${error.message}`, 'error'); } });
     parentBody.on('click', '#sg-delete-preset-btn', async () => { if (settings.prompts.length <= 1) { logMessage('不能删除最后一个预设。', 'warn'); return; } if (confirm(`确定要删除预设 \"${settings.prompts[settings.activePromptIndex].name}\" 吗?`)) { settings.prompts.splice(settings.activePromptIndex, 1); settings.activePromptIndex = Math.max(0, settings.activePromptIndex - 1); await saveSettings(); updatePromptsPanel(); } });
     parentBody.on('change', '#sg-theme-select', async (e) => { settings.activeButtonThemeIndex = parseInt($(e.target).val()); await saveSettings(); updateAppearancePanel(); applyButtonTheme(); });
