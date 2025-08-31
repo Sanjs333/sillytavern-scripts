@@ -1564,7 +1564,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.8';
+    const SCRIPT_VERSION = '4.9';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -2239,13 +2239,13 @@ function showSuggestionModal(text) {
         #${PANEL_ID} .input-with-button { display: flex; align-items: center; gap: 8px; }
         #${PANEL_ID} input[type=text], #${PANEL_ID} input[type=password], #${PANEL_ID} input[type=number], #${PANEL_ID} textarea, #${PANEL_ID} .sg-select-wrapper select { width: 100%; background: var(--sg-bg-input); color: var(--sg-text) !important; border: 1px solid var(--sg-border); border-radius: var(--sg-radius); padding: 10px 14px; box-sizing: border-box; font-size: 14px; transition: all 0.2s ease, opacity 0.2s ease; height: 40px; }
         #${PANEL_ID} textarea { height: auto; flex-grow: 1; resize: none; line-height: 1.7; }
-        #${PANEL_ID} input:focus, #${PANEL_ID} textarea:focus, #${PANEL_ID} .sg-select-wrapper select:focus { outline: none; border-color: var(--sg-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sg-accent) 40%, transparent); }
+        #${PANEL_ID} input:focus, #${PANEL_ID} textarea:focus, #${PANEL_ID} .sg-select-wrapper select:focus { outline: none; border-color: var(--sg-accent); box-shadow: 0 0 0 3px rgba(119, 85, 185, 0.4); }
         #${PANEL_ID} .sg-select-wrapper { position: relative; margin-top: 8px; }
         #${PANEL_ID} .sg-select-wrapper select { appearance: none; -webkit-appearance: none; }
         #${PANEL_ID} .sg-select-wrapper::after { content: '▾'; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--sg-text-muted); }
         .sg-button { display: inline-flex; align-items: center; justify-content: center; border: none; border-radius: var(--sg-radius); cursor: pointer; font-weight: 600; transition: all 0.2s ease; text-decoration: none; box-sizing: border-box; }
         .sg-button.primary { background: var(--sg-accent); color: white; padding: 10px 18px; font-size: 14px; height: 40px; } .sg-button.primary:hover { filter: brightness(1.1); }
-        .sg-button.secondary { background: var(--sg-bg-input); border: 1px solid var(--sg-border); color: var(--sg-text); padding: 10px 18px; font-size: 14px; height: 40px; } .sg-button.secondary:hover { background: color-mix(in srgb, var(--sg-bg-input) 50%, var(--sg-text) 10%); }
+        .sg-button.secondary { background: var(--sg-bg-input); border: 1px solid var(--sg-border); color: var(--sg-text); padding: 10px 18px; font-size: 14px; height: 40px; } .sg-button.secondary:hover { background: rgba(255, 255, 255, 0.08); }
         .sg-button.danger { background: #E53E3E; color: white; padding: 10px 18px; font-size: 14px; height: 40px; } .sg-button.danger:hover { background: #C53030; }
         #${PANEL_ID} .sg-icon-btn { padding: 0; width: 30px; height: 30px; flex-shrink: 0; font-size: 15px; }
         #${PANEL_ID} .sg-actions-bar { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
@@ -2309,7 +2309,7 @@ function showSuggestionModal(text) {
         .sg-css-editor-wrapper > textarea { flex-grow: 1; width: 100%; min-height: 120px; resize: vertical; }
         #sg-update-notifier {
     padding: 12px 16px;
-    background: color-mix(in srgb, var(--sg-accent) 20%, transparent);
+    background: rgba(119, 85, 185, 0.2);
     border-bottom: 1px solid var(--sg-border);
     display: none;
     align-items: center;
@@ -2347,7 +2347,7 @@ function showSuggestionModal(text) {
     parent$(parentDoc.head).append(styles); 
 }
     
-async function testConnectionAndFetchModels() {
+    async function testConnectionAndFetchModels() {
     const $btn = parent$('#sg-test-connection-btn');
     const $modelSelect = parent$('#sg-model-select');
     const activeProfile = getActiveApiProfile();
