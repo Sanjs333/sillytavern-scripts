@@ -2869,14 +2869,33 @@ function updateAutomaticGenerationListeners() {
     console.log('[AI指引助手] 自动监听器状态更新完成。');
 }
 
-function initCore() {
+function init() {
+    if (!parent$) {
+        console.error('[AI指引助手] 致命错误: parent$ (jQuery) 不可用。');
+        return;
+    }
+
+    cleanupOldUI();
+    injectStyles();
+    createAndInjectUI();
+
     loadSettings().then(() => {
+        bindCoreEvents();
+
         if (typeof SillyTavern === 'undefined' || typeof SillyTavern.substituteParams !== 'function') {
             logMessage(`<b>[错误]</b> 核心组件 SillyTavern 或 substituteParams 函数缺失，插件无法运行。`, 'error');
             return;
         }
+
+        applyCharacterBinding();
+        applyButtonTheme();
+        observeThemeChanges();
+
         updateAutomaticGenerationListeners();
-        logMessage(`AI指引助手 v${SCRIPT_VERSION} 核心逻辑初始化完成。`, "success");
+
+        logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success");
+        testConnectionAndFetchModels();
+        checkForUpdates();
     });
 }
 
@@ -2907,14 +2926,11 @@ function waitForTavernTools() {
         typeof SillyTavern !== 'undefined' &&
         typeof TavernHelper !== 'undefined' &&
         typeof eventOn !== 'undefined' &&
-        typeof tavern_events !== 'undefined'
+        typeof tavern_events !== 'undefined' &&
+        (window.parent.jQuery || window.parent.$)
     ) {
         console.log('%c[AI指引助手] 核心工具已送达！执行主程序...', 'color: lightgreen; font-weight: bold;');
-
-        initCore();
-
-        eventOn(tavern_events.EXTENSIONS_FIRST_LOAD, initUI);
-
+        init();
     } else {
         console.warn('[AI指引助手] 核心工具尚未送达，将在200毫秒后再次检查...');
         setTimeout(waitForTavernTools, 200);
