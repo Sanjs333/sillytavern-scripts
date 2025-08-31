@@ -1,5 +1,5 @@
 {
-  "version": "5.01",
-  "commit": "13eb5f1d6840851e00e022c8c4e7898e85a69d90",
-  "notes": "v5.01 更新日志：<br>- <b>[更新]</b> 增加了自定义默认预设功能。"
+  "version": "5.1",
+  "commit": "c91b89e0fb58ce67769fbe72925add4fb1ebdb5a",
+  "notes": "v5.1 更新日志：<br>- <b>[更新]</b> 增加了API参数自定义功能。"
 }
