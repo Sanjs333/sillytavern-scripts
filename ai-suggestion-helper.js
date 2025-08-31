@@ -2653,6 +2653,16 @@ function bindCoreEvents() {
             cleanupSuggestions();
         }
     });
+    parentBody.on('click', `#${BUTTON_ID}`, (event) => { 
+        event.stopPropagation(); 
+        const $overlay = parent$(`#${OVERLAY_ID}`); 
+        $overlay.show(); 
+        const $panel = $overlay.find(`#${PANEL_ID}`); 
+        centerElement($panel[0]); 
+        updateApiPanel(); 
+        updatePromptsPanel(); 
+        updateAppearancePanel(); 
+    });
     parentBody.on('click', '#sg-check-for-updates-btn', async function() {
     const $btn = $(this);
     const $icon = $btn.find('i');
