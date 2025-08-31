@@ -1,5 +1,5 @@
 {
-  "version": "4.9",
-  "commit": "8a3ef247bdbd581714c34823a1a470044f8c3069",
-  "notes": "v4.9 更新日志：<br>- <b>[修复]</b> 修复了在部分基于 WebKit 内核的浏览器（如 Via, Kiwi, Safari 等）上设置面板无法打开的兼容性问题。"
+  "version": "5.0",
+  "commit": "39f8f9bf4fbb58199e987fe90f53b95e604c1b61",
+  "notes": "v5.0 更新日志：<br>- <b>[更新]</b> 增加了自定义默认预设功能。"
 }
