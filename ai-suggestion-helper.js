@@ -2859,30 +2859,35 @@ function updateAutomaticGenerationListeners() {
     console.log('[AI指引助手] 自动监听器状态更新完成。');
 }
 
-function init() { 
-    if (!parent$) { return; } 
-    cleanupOldUI(); 
-    injectStyles(); 
-    createAndInjectUI(); 
-    loadSettings().then(() => { 
-        bindCoreEvents(); 
-        
-        if (typeof SillyTavern === 'undefined' || typeof SillyTavern.substituteParams !== 'function') { 
-            logMessage(`<b>[错误]</b> 核心组件 SillyTavern 或 substituteParams 函数缺失，插件无法运行。`, 'error'); 
-            return; 
-        } 
-        
-        applyCharacterBinding(); 
-        applyButtonTheme();
-        observeThemeChanges();
-        
+function initCore() {
+    loadSettings().then(() => {
+        if (typeof SillyTavern === 'undefined' || typeof SillyTavern.substituteParams !== 'function') {
+            logMessage(`<b>[错误]</b> 核心组件 SillyTavern 或 substituteParams 函数缺失，插件无法运行。`, 'error');
+            return;
+        }
         updateAutomaticGenerationListeners();
-        
-        logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success"); 
-        console.log('%c[更新成功!] 这是 v4.5 版本独有的日志!', 'color: lime; font-size: 16px; font-weight: bold;');
-        testConnectionAndFetchModels();
-        checkForUpdates();
-    }); 
+        logMessage(`AI指引助手 v${SCRIPT_VERSION} 核心逻辑初始化完成。`, "success");
+    });
+}
+
+function initUI() {
+    console.log('[AI指引助手] 监听到UI就绪事件，开始注入界面...');
+    
+    cleanupOldUI();
+    injectStyles();
+    createAndInjectUI();
+    bindCoreEvents();
+    
+    applyCharacterBinding();
+    applyButtonTheme();
+    observeThemeChanges();
+    
+    testConnectionAndFetchModels();
+    checkForUpdates();
+    
+    console.log('%c[更新成功!] 这是 v4.5 版本独有的日志!', 'color: lime; font-size: 16px; font-weight: bold;');
+    
+    logMessage(`AI指引助手 v${SCRIPT_VERSION} 界面初始化完成。`, "success");
 }
     
 function waitForTavernTools() {
@@ -2895,7 +2900,11 @@ function waitForTavernTools() {
         typeof tavern_events !== 'undefined'
     ) {
         console.log('%c[AI指引助手] 核心工具已送达！执行主程序...', 'color: lightgreen; font-weight: bold;');
-        init();
+
+        initCore();
+
+        eventOn(tavern_events.EXTENSIONS_FIRST_LOAD, initUI);
+
     } else {
         console.warn('[AI指引助手] 核心工具尚未送达，将在200毫秒后再次检查...');
         setTimeout(waitForTavernTools, 200);
@@ -2905,4 +2914,3 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
-
