@@ -1304,103 +1304,6 @@
 `.trim()
 },
         {
-            name: '柠檬黄',
-            mainActionCss: `
-@keyframes citrus-pulse {
-  0%, 100% {
-    box-shadow: 0 0 10px #FFEB3B, 0 0 5px #FFFDE7;
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 20px #FFD600, 0 0 10px #FFFDE7;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes citrus-squeeze {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(0.9); }
-}
-
-#sg-manual-generate-btn {
-    background: linear-gradient(135deg, #FFEE58, #FDD835);
-    border: 2px solid #FFFDE7;
-    color: #4E342E !important; 
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    padding: 0;
-    font-weight: 900;
-    box-shadow: 0 5px 12px rgba(255, 213, 0, 0.4), inset 0 2px 2px #FFF9C4;
-    transition: all 0.2s ease-out;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
-#sg-manual-generate-btn .sg-btn-text::before {
-    content: '🍋';
-    font-size: 22px;
-    line-height: 1;
-    color: initial; 
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease;
-}
-
-#sg-manual-generate-btn .sg-btn-text {
-    font-size: 0;
-}
-
-#sg-manual-generate-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 18px rgba(255, 213, 0, 0.6), inset 0 2px 2px #FFF9C4;
-}
-        
-#sg-manual-generate-btn:hover .sg-btn-text::before {
-    transform: rotate(-15deg);
-}
-
-#sg-manual-generate-btn:active {
-    transform: translateY(0);
-    animation: citrus-squeeze 0.2s ease;
-}
-
-#sg-manual-generate-btn:disabled {
-    cursor: wait;
-    animation: citrus-pulse 1.8s infinite ease-in-out;
-}
-`.trim(),
-        suggestionCss: `
-.suggestion-capsule, #sg-regenerate-btn {
-    background: #FFFDE7;
-    border: 1px solid #FFF59D;
-    color: #8D6E63;
-    height: 34px;
-    border-radius: 8px;
-    padding: 0 14px;
-    font-size: 13px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(216, 201, 133, 0.3);
-}
-
-#sg-regenerate-btn {
-    width: 34px;
-    padding: 0;
-    border-radius: 50%;
-}
-
-.suggestion-capsule:hover, #sg-regenerate-btn:hover {
-    background: #FFF9C4;
-    color: #5D4037;
-    border-color: #FDD835;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(255, 213, 0, 0.4);
-}
-`.trim()
-    },
-        {
             name: '琉璃浅光 (亮色)',
             mainActionCss: `
 @keyframes soft-glow-pulse {
@@ -1564,7 +1467,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.7';
+    const SCRIPT_VERSION = '4.6';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1602,22 +1505,18 @@
         logMessage('更新检查已在进行中，请稍候...', 'warn');
         return null;
     }
-
     isCheckingForUpdates = true;
-
     try {
         const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json?t=${Date.now()}`);
         if (!response.ok) {
             logMessage('检查更新失败：无法连接到版本服务器。', 'error');
             return false;
         }
-
         const latest = await response.json();
         const currentVersion = parseFloat(SCRIPT_VERSION);
         const latestVersion = parseFloat(latest.version);
-
         if (latestVersion > currentVersion) {
-            showUpdateNotification(latest.version, latest.notes);
+            showUpdateNotification(latest);
             return true;
         } else {
             logMessage('已经是最新版本。', 'success');
@@ -1632,7 +1531,11 @@
     }
 }
 
-    function showUpdateNotification(version, notes) {
+    function showUpdateNotification(latest) {
+    const version = latest.version;
+    const notes = latest.notes;
+    const latestCommitHash = latest.commit;
+
     const $notifier = parent$('#sg-update-notifier');
     const notifierHtml = `
         <div class="update-info">
@@ -1643,33 +1546,28 @@
     `;
     $notifier.html(notifierHtml).css('display', 'flex');
 
-    parent$('body').off('click.update').on('click.update', '#sg-force-update-btn', function() {
+    parent$('body').off('click.update').on('click.update', '#sg-force-update-btn', function(event) {
+        event.preventDefault();
         const $btn = parent$(this);
         $btn.text('更新中...').prop('disabled', true);
 
-        (async () => {
-            try {
-                const repo = 'Sanjs333/sillytavern-scripts';
-                const branch = 'main';
+        try {
+            if (latestCommitHash) {
                 const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
-                
-                const apiUrl = `https://api.github.com/repos/${repo}/commits/${branch}`;
-                const response = await fetch(apiUrl, { cache: 'no-store' });
-                if (response.ok) {
-                    const commitData = await response.json();
-                    const latestCommitHash = commitData.sha;
-                    const data = { hash: latestCommitHash, timestamp: Date.now() };
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-                    console.log('[AI指引助手 更新程序] 已将最新版本信息写入缓存，准备刷新。');
-                }
-            } catch (e) {
-                console.error('[AI指引助手 更新程序] 写入缓存失败，但仍将尝试刷新。', e);
-            } finally {
-                setTimeout(() => {
-                    window.parent.location.reload();
-                }, 300);
+                const data = { hash: latestCommitHash, timestamp: Date.now() };
+                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                console.log(`[AI指引助手 更新程序] 已将新版本 (${latestCommitHash.substring(0,7)}) 信息写入缓存，准备刷新。`);
+            } else {
+                console.warn('[AI指引助手 更新程序] version.json 中未找到 commit ID，将清空缓存后刷新。');
+                localStorage.removeItem('ai_suggestion_helper_commit_cache');
             }
-        })();
+        } catch (e) {
+            console.error('[AI指引助手 更新程序] 写入缓存失败，但仍将尝试刷新。', e);
+        } finally {
+            setTimeout(() => {
+                window.parent.location.reload();
+            }, 300);
+        }
     });
 }
 
