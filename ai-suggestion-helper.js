@@ -1354,7 +1354,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '4.4';
+    const SCRIPT_VERSION = '4.5';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -2879,6 +2879,7 @@ function init() {
         updateAutomaticGenerationListeners();
         
         logMessage(`AI指引助手 v${SCRIPT_VERSION} 初始化完成。`, "success"); 
+        console.log('%c[更新成功!] 这是 v4.5 版本独有的日志!', 'color: lime; font-size: 16px; font-weight: bold;');
         testConnectionAndFetchModels();
         checkForUpdates();
     }); 
@@ -2904,3 +2905,4 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
+
