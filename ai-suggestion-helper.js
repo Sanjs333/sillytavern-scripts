@@ -1542,7 +1542,10 @@
             apiProvider: 'openai_compatible',
             apiKey: '',
             baseUrl: 'https://api.openai.com/v1',
-            model: 'gpt-4o-mini'
+            model: 'gpt-4o-mini',
+            temperature: 1.0,
+            top_p: 1.0,
+            max_tokens: 8192
         }
     ],
     activeApiProfileIndex: 0,
@@ -1560,12 +1563,12 @@
 };
         function getActiveApiProfile() {
         if (!settings.apiProfiles || settings.apiProfiles.length === 0) {
-            return { name: '无配置', apiProvider: 'openai_compatible', apiKey: '', baseUrl: '', model: '' };
+            return { name: '无配置', apiProvider: 'openai_compatible', apiKey: '', baseUrl: '', model: '', temperature: 0.8, top_p: 1.0, max_tokens: 8192};
         }
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.01';
+    const SCRIPT_VERSION = '5.1';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1711,6 +1714,13 @@
                 };
                 const finalPrompts = mergeWithDefaults(existingSettings.prompts, DEFAULT_PROMPTS, '提示词');
                 const finalThemes = mergeWithDefaults(existingSettings.buttonThemes, DEFAULT_THEMES, '主题');
+                if (existingSettings.apiProfiles) {
+existingSettings.apiProfiles.forEach(profile => {
+profile.temperature = profile.temperature ?? 1.0;
+profile.top_p = profile.top_p ?? 1.0;
+profile.max_tokens = profile.max_tokens ?? 8192;
+});
+}
                 settings = {
                     ...settings,
                     ...existingSettings,
@@ -1808,8 +1818,13 @@ Note: Contextual integrity maintained. Proceeding with narrative vector evaluati
         const body = {
             model: activeProfile.model,
             messages: [{ role: 'user', content: promptText }],
-            temperature: 0.8
+            temperature: activeProfile.temperature,
+            top_p: activeProfile.top_p,
+            max_tokens: activeProfile.max_tokens
         };
+        const bodyForLog = { ...body };
+        delete bodyForLog.messages;
+        logMessage(`<b>[请求体参数]</b> <pre>${JSON.stringify(bodyForLog, null, 2)}</pre>`, 'info');
         const headers = { 'Content-Type': 'application/json' };
         if (activeProfile.apiKey && activeProfile.apiKey.trim() !== '') {
             headers['Authorization'] = `Bearer ${activeProfile.apiKey}`;
@@ -1835,9 +1850,16 @@ Note: Contextual integrity maintained. Proceeding with narrative vector evaluati
         ];
         const body = { 
             contents: [{ parts: [{ text: promptText }] }], 
-            generationConfig: { temperature: 1.1, maxOutputTokens: 8192 },
+            generationConfig: { 
+                temperature: activeProfile.temperature,
+                topP: activeProfile.top_p,
+                maxOutputTokens: activeProfile.max_tokens
+            },
             safetySettings
-        }; 
+        };
+        const bodyForLog = { ...body };
+        delete bodyForLog.contents;
+        logMessage(`<b>[请求体参数 (Google Gemini)]</b> <pre>${JSON.stringify(bodyForLog, null, 2)}</pre>`, 'info');
         const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); 
         const data = await response.json(); 
         if (!response.ok) { 
@@ -2343,6 +2365,9 @@ function showSuggestionModal(text) {
     line-height: 1.5;
     color: var(--sg-text-muted);
 }
+.sg-api-param-input {
+    text-align: center;
+}
 .sg-subtle-hint {
     font-size: 12px;
     color: var(--sg-text-muted);
@@ -2606,6 +2631,18 @@ function showSuggestionModal(text) {
                     <label for="sg-model-select">模型</label>
                     <div class="sg-select-wrapper"><select id="sg-model-select"></select></div>
                 </div>
+                <div class="form-group sg-responsive-row">
+                    <label for="sg-param-temperature">温度</label>
+                    <input type="number" id="sg-param-temperature" min="0" max="2" step="0.1" class="sg-api-param-input">
+                </div>
+                <div class="form-group sg-responsive-row">
+                    <label for="sg-param-top-p">Top P</label>
+                    <input type="number" id="sg-param-top-p" min="0" max="1" step="0.05" class="sg-api-param-input">
+                </div>
+                <div class="form-group sg-responsive-row">
+                    <label for="sg-param-max-tokens">最大Token数</label>
+                    <input type="number" id="sg-param-max-tokens" min="1" step="1" class="sg-api-param-input">
+                </div>
                 <hr class="sg-hr">
                 <div class="form-group sg-responsive-row"><label for="sg-context-length">上下文长度 (获取消息数量)</label><input type="number" id="sg-context-length" min="2" max="50"></div>
                 <div class="form-group sg-responsive-row">
@@ -2814,7 +2851,10 @@ ${prefixedSuggestionCss}
         $panel.find('#sg-extraction-tag').val(settings.extractionTag);
         if (settings.extractionMode === 'extract_by_tag') { $panel.find('#sg-extraction-tag-group').show(); } else { $panel.find('#sg-extraction-tag-group').hide(); }
         const isGoogle = activeProfile.apiProvider === 'google_gemini';
-        $panel.find('#sg-base-url-group').toggle(!isGoogle); 
+        $panel.find('#sg-base-url-group').toggle(!isGoogle);
+        $panel.find('#sg-param-temperature').val(activeProfile.temperature);
+        $panel.find('#sg-param-top-p').val(activeProfile.top_p);
+        $panel.find('#sg-param-max-tokens').val(activeProfile.max_tokens); 
         setTimeout(() => testConnectionAndFetchModels(), 100); 
     }
     function updatePromptsPanel() {
@@ -2950,7 +2990,7 @@ function bindCoreEvents() {
     parentBody.on('click', `#${PANEL_ID} .panel-nav-item`, function() { const tab = parent$(this).data('tab'); parent$(`#${PANEL_ID} .panel-nav-item`).removeClass('active'); parent$(this).addClass('active'); parent$(`#${PANEL_ID} .panel-content`).removeClass('active'); parent$(`#sg-panel-${tab}, [data-tab-name='${tab}']`).addClass('active'); });
     parentBody.on('click', '#sg-edit-profile-btn', async function() { const $controls = parent$(this).closest('.sg-profile-controls'); const $nameInput = $controls.find('#sg-api-profile-name'); const $profileSelect = $controls.find('#sg-api-profile-select'); if ($controls.hasClass('is-editing')) { const newName = $nameInput.val().trim(); if (newName) { getActiveApiProfile().name = newName; await saveSettings(); $profileSelect.find('option:selected').text(newName); logMessage(`配置名称已保存为 \"<b>${newName}</b>\"。`, 'success'); } $controls.removeClass('is-editing'); } else { const currentName = $profileSelect.find('option:selected').text(); $nameInput.val(currentName); $controls.addClass('is-editing'); $nameInput.focus().select(); } });
     parentBody.on('change', '#sg-api-profile-select', async function() { settings.activeApiProfileIndex = parseInt($(this).val()); await saveSettings(); updateApiPanel(); });
-    parentBody.on('click', '#sg-new-profile-btn', async function() { parent$('#sg-edit-profile-btn').closest('.sg-profile-controls').removeClass('is-editing'); settings.apiProfiles.push({ name: '新配置', apiProvider: 'openai_compatible', apiKey: '', baseUrl: '', model: '' }); settings.activeApiProfileIndex = settings.apiProfiles.length - 1; await saveSettings(); updateApiPanel(); setTimeout(() => parent$('#sg-edit-profile-btn').trigger('click'), 100); });
+    parentBody.on('click', '#sg-new-profile-btn', async function() { parent$('#sg-edit-profile-btn').closest('.sg-profile-controls').removeClass('is-editing'); settings.apiProfiles.push({ name: '新配置', apiProvider: 'openai_compatible', apiKey: '', baseUrl: '', model: '', temperature: 1.0, top_p: 1.0, max_tokens: 8192 }); settings.activeApiProfileIndex = settings.apiProfiles.length - 1; await saveSettings(); updateApiPanel(); setTimeout(() => parent$('#sg-edit-profile-btn').trigger('click'), 100); });
     parentBody.on('click', '#sg-delete-profile-btn', async function() { if (settings.apiProfiles.length <= 1) { logMessage('不能删除最后一个配置。', 'warn'); return; } if (confirm(`确定要删除配置 \"${getActiveApiProfile().name}\" 吗？`)) { settings.apiProfiles.splice(settings.activeApiProfileIndex, 1); settings.activeApiProfileIndex = 0; await saveSettings(); updateApiPanel(); } });
     parentBody.on('change', '#sg-api-provider', async function() {
     const newProvider = $(this).val();
@@ -2977,6 +3017,20 @@ function bindCoreEvents() {
     });
     parentBody.on('change', '#sg-model-select', async function() { getActiveApiProfile().model = parent$(this).val(); await saveSettings(); });
     parentBody.on('click', '#sg-test-connection-btn', testConnectionAndFetchModels);
+    parentBody.on('input', '.sg-api-param-input', async function() {
+        const activeProfile = getActiveApiProfile();
+        if (!activeProfile) return;
+
+        activeProfile.temperature = parseFloat(parent$('#sg-param-temperature').val());
+        activeProfile.top_p = parseFloat(parent$('#sg-param-top-p').val());
+        activeProfile.max_tokens = parseInt(parent$('#sg-param-max-tokens').val());
+        
+        if (isNaN(activeProfile.temperature)) activeProfile.temperature = 1.0;
+        if (isNaN(activeProfile.top_p)) activeProfile.top_p = 1.0;
+        if (isNaN(activeProfile.max_tokens) || activeProfile.max_tokens < 1) activeProfile.max_tokens = 8192;
+        
+        await saveSettings();
+    });
     parentBody.on('change', '#sg-context-length', async function() { const newLength = parseInt(parent$(this).val()) || 10; settings.contextLength = Math.max(2, Math.min(50, newLength)); parent$(this).val(settings.contextLength); await saveSettings(); logMessage(`上下文长度已更新为 ${settings.contextLength} 条消息。`, 'info'); });
     parentBody.on('change', '#sg-enable-jailbreak', async function() { settings.enableJailbreak = parent$(this).is(':checked'); await saveSettings(); logMessage(`破限已<b>${settings.enableJailbreak ? '启用' : '禁用'}</b>。`, 'info'); });
     parentBody.on('change', '#sg-extraction-mode', async function() { settings.extractionMode = parent$(this).val(); if (settings.extractionMode === 'extract_by_tag') { parent$('#sg-extraction-tag-group').show(); } else { parent$('#sg-extraction-tag-group').hide(); } await saveSettings(); });
@@ -3205,5 +3259,3 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
-
-
