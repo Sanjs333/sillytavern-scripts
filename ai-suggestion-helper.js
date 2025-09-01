@@ -46,15 +46,28 @@
 - **多样性**：三条建议的情绪基调应有明显区别
 - **推进性**：每条建议都应该为剧情发展提供新的可能性
 
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
+
 # 按钮名称(可选, 用英文逗号分隔)
 #BUTTONS: 动作型,情感型,策略型
 
 # 输出格式
-你必须只响应一个不换行的单行文本。每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
 
 # 正确输出示例
 【[动作型]内容】【[情感型]内容】【[策略型]内容】
 **注意：最终输出的【】内部不应包含任何如[动作型]、[情感型]等分类前缀。**
+
+# 用户人设参考
+{{personality}}
 
 # 对话上下文
 [最近对话流程]:
@@ -109,15 +122,28 @@
 - **多样性**：四条建议的情绪基调和互动方式应有明显区别
 - **推进性**：每条建议都应该为剧情发展提供新的可能性
 
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
+
 # 按钮名称
 #BUTTONS: 动作,情感,策略,探究
 
 # 输出格式
-你必须只响应一个不换行的单行文本。每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
 
 # 正确输出示例
 【[动作型]内容】【[情感型]内容】【[策略型]内容】【[探究型]内容】
 **注意：最终输出的【】内部不应包含任何如[动作型]、[情感型]等分类前缀。**
+
+# 用户人设参考
+{{personality}}
 
 # 对话上下文
 [最近对话流程]:
@@ -169,15 +195,28 @@
 - **描写**：运用"展现而非告知"的原则，用具体细节代替抽象形容
 - **沉浸感**：让每条建议都能带来强烈的画面感和代入感
 
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
+
 # 按钮名称
 #BUTTONS: 动作,对话,内心戏
 
 # 输出格式
-你必须只响应一个不换行的单行文本。每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
 
 # 正确输出示例
 【[动作]内容】【[对话]内容】【[内心/反应]内容】
 **注意：最终输出的【】内部不应包含任何如[动作]、[对话]等分类前缀。**
+
+# 用户人设参考
+{{personality}}
 
 # 对话上下文
 [最近对话流程]:
@@ -227,15 +266,28 @@
 - **第一人称：** 所有建议都必须使用用户的第一人称视角和口吻。
 - **推进性**：每条建议都必须能打开一个新的剧情可能性。
 
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
+
 # 按钮名称
 #BUTTONS: 引入,改变,探索,内心
 
 # 输出格式
-你必须只响应一个不换行的单行文本。每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
 
 # 正确输出示例
 【[引入]内容】【[改变]内容】【[探索]内容】【[内心]内容】
 **注意：最终输出的【】内部不应包含任何如[引入]、[改变]等分类前缀。**
+
+# 用户人设参考
+{{personality}}
 
 # 对话上下文
 [最近对话流程]:
@@ -338,10 +390,10 @@
 #BUTTONS: 第一人称续写,旁白式续写
 
 # 输出格式
-你必须生成两条续写选项，每条用【】符号包裹。不要包含任何序号、JSON。
-
-# **格式说明**
-你可以在【】内部自由地使用换行来划分段落和对话，以创造电影般的叙事感。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
+- 可以在【】内部自由地使用换行来划分段落和对话，以创造电影般的叙事感。
 
 # 正确输出示例
 **示例（第一人称+旁白组合）：**
@@ -378,14 +430,16 @@
 - 推动情节到下一个阶段
 - 创造新的互动契机
 
-## 用户人设参考
+# 用户人设参考
 {{personality}}
 
 # 对话上下文
 [最近对话流程]:
 {{conversation_flow}}
+
 [用户最新回复]: 
 {{user_last_reply}}
+
 [AI最新回复]: 
 {{ai_last_reply}}
 
@@ -429,8 +483,19 @@
 
 # 风格与输出
 - **风格：** **全部建议以用户视角出发，严格遵循用户第一人称和用户的角色性格**，语言要充满情色和感染力，大胆、直接、充满肉感。每条建议40-80字，确保内容丰富有层次。
-- **按钮名称：** #BUTTONS: 动作,言语,感官,道具
-- **输出格式：** 每条建议都必须用【】符号包裹。不要包含任何序号、JSON或其他多余字符。
+
+# 输出格式
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
+
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
 
 # 按钮名称
 #BUTTONS: 动作,言语,感官,道具
@@ -438,6 +503,9 @@
 # 正确输出示例
 【[动作]内容】【[言语]内容】【[感官]内容】【[道具]内容】
 **注意：最终输出的【】内部不应包含任何如[动作]、[言语]等分类前缀。**
+
+# 用户人设参考
+{{personality}}
 
 # 对话上下文
 [最近对话流程]:
@@ -506,20 +574,33 @@
 - **差异化**: 五个选项必须泾渭分明，在目的和方法上完全不同。
 - **按钮名称**: #BUTTONS: 动作,言语,感官,道具,变数
 
+# 格式要求
+- **模仿上文风格**：严格按照对话上下文的叙事格式和语言风格
+- **双语处理**：如果上文包含双语内容，续写时保持相应的语言使用习惯
+- **对话格式**：保持与上文一致的对话标记方式
+- **心理活动**：延续上文中心理描写的表达方式
+- **动作描写**：模仿上文的动作和环境描写风格
+
 # 输出格式
-- 每条建议都必须用【】符号包裹。
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
 - 【】内部可以使用换行来划分段落和对话
-- 所有【】建议块之间必须紧密相连。
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
 
 # 正确输出示例
 【[动作]内容】【[言语]内容】【[感官]内容】【[道具]内容】【[变数]内容】
 **注意：最终输出的【】内部不应包含任何如[动作]、[言语]等分类前缀。**
 
+# 用户人设参考
+{{personality}}
+
 # 对话上下文
 [最近对话流程]:
 {{conversation_flow}}
+
 [用户最新回复]: 
 {{user_last_reply}}
+
 [AI最新回复]: 
 {{ai_last_reply}}
 
@@ -1758,6 +1839,34 @@ profile.max_tokens = profile.max_tokens ?? 8192;
         } 
     }
     
+    async function restoreDefaultPrompts() {
+        const confirmation = confirm(
+            "【重要】此操作将执行以下两件事：\n\n" +
+            "1. 将您本地的【同名】官方预设（如'三角协议'）恢复到最新版本，您对它们的修改将丢失。\n" +
+            "2. 添加任何您本地缺失的新的官方预设。\n\n" +
+            "此操作【不会】影响或删除您自己创建的、名称不同的预设。\n\n" +
+            "确定要继续吗？"
+        );
+    
+        if (!confirmation) {
+            logMessage('用户取消了恢复操作。', 'info');
+            return;
+        }
+    
+        try {
+            const userPromptsMap = new Map(settings.prompts.map(p => [p.name, p]));
+            DEFAULT_PROMPTS.forEach(defaultPrompt => {
+                userPromptsMap.set(defaultPrompt.name, JSON.parse(JSON.stringify(defaultPrompt)));
+            });
+            settings.prompts = Array.from(userPromptsMap.values());
+            await saveSettings();
+            updatePromptsPanel();
+            logMessage('所有官方预设已成功恢复/更新至最新版本。', 'success');
+        } catch (error) {
+            logMessage(`恢复默认预设时发生错误: ${error.message}`, 'error');
+        }
+    }
+
     function extractTextFromMessage(messageObj) {
         try {
             if (!messageObj) return '';
@@ -2667,6 +2776,9 @@ function showSuggestionModal(text) {
                         <button id="sg-add-prompt-btn" class="sg-button secondary sg-icon-btn" title="新建预设"><i class="fa-solid fa-plus"></i></button>
                         <button id="sg-import-prompts-btn" class="sg-button secondary sg-icon-btn" title="导入预设 (替换全部)"><i class="fa-solid fa-upload"></i></button>
                         <button id="sg-export-prompts-btn" class="sg-button secondary sg-icon-btn" title="导出全部预设"><i class="fa-solid fa-download"></i></button>
+                        <button id="sg-restore-defaults-btn" class="sg-button secondary sg-icon-btn" title="恢复/更新官方预设" style="color: #ED8936;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+    </button>
                     </div>
                 </div>
                 <hr class="sg-hr">
@@ -3042,9 +3154,41 @@ function bindCoreEvents() {
     parentBody.on('change', '#sg-enable-jailbreak', async function() { settings.enableJailbreak = parent$(this).is(':checked'); await saveSettings(); logMessage(`破限已<b>${settings.enableJailbreak ? '启用' : '禁用'}</b>。`, 'info'); });
     parentBody.on('change', '#sg-extraction-mode', async function() { settings.extractionMode = parent$(this).val(); if (settings.extractionMode === 'extract_by_tag') { parent$('#sg-extraction-tag-group').show(); } else { parent$('#sg-extraction-tag-group').hide(); } await saveSettings(); });
     parentBody.on('input', '#sg-extraction-tag', async function() { settings.extractionTag = parent$(this).val(); await saveSettings(); });
-    parentBody.on('click', '#sg-add-prompt-btn', async () => { settings.prompts.push({ name: '新预设', content: '# 在这里写下你的新预设...' }); settings.activePromptIndex = settings.prompts.length - 1; await saveSettings(); updatePromptsPanel(); });
+    parentBody.on('click', '#sg-add-prompt-btn', async () => { 
+    const newPromptContent = `# 任务
+
+
+# 按钮名称(可选, 用英文逗号分隔)
+#BUTTONS: A,B,C
+
+# 输出格式
+- 每条建议都必须用【】符号包裹，不要包含任何序号、JSON
+- 【】内部可以使用换行来划分段落和对话
+- 所有【】建议块之间必须紧密相连
+- 所有建议中都不能出现【】符号
+
+# 用户人设参考
+{{personality}}
+
+# 对话上下文
+[最近对话流程]:
+{{conversation_flow}}
+
+[用户最新回复]: 
+{{user_last_reply}}
+
+[AI最新回复]: 
+{{ai_last_reply}}
+`;
+
+    settings.prompts.push({ name: '新预设', content: newPromptContent.trim() }); 
+    settings.activePromptIndex = settings.prompts.length - 1; 
+    await saveSettings(); 
+    updatePromptsPanel(); 
+});
     parentBody.on('click', '#sg-export-prompts-btn', () => { try { const dataStr = JSON.stringify(settings.prompts, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = parentDoc.createElement('a'); a.href = url; a.download = 'ai-指引助手-全部预设.json'; a.click(); URL.revokeObjectURL(url); logMessage('全部预设已成功导出。', 'success'); } catch (error) { logMessage(`导出预设时出错: ${error.message}`, 'error'); } });
     parentBody.on('click', '#sg-import-prompts-btn', () => { parent$('#sg-prompt-file-input').click(); });
+    parentBody.on('click', '#sg-restore-defaults-btn', restoreDefaultPrompts);
     parentBody.on('change', '#sg-preset-select', async (e) => { settings.activePromptIndex = parseInt($(e.target).val()); await saveSettings(); updatePromptsPanel(); });
     parentBody.on('click', '#sg-save-preset-name-btn', async function() { const newName = parent$('#sg-preset-name-input').val(); if (newName) { settings.prompts[settings.activePromptIndex].name = newName; logMessage('预设名称已保存。', 'success'); } const currentChar = TavernHelper.getCharData(); if (currentChar) { const charId = currentChar.avatar; const charName = currentChar.name; const activePresetIndex = settings.activePromptIndex; if (settings.characterBindings[charId] === activePresetIndex) { delete settings.characterBindings[charId]; logMessage(`已解除预设 \"<b>${newName}</b>\" 与角色 \"<b>${charName}</b>\" 的绑定。`, 'success'); } else { settings.characterBindings[charId] = activePresetIndex; logMessage(`已将预设 \"<b>${newName}</b>\" 绑定到角色 \"<b>${charName}</b>\"。`, 'success'); } } else { logMessage('无法获取当前角色信息，仅保存名称。', 'warn'); } await saveSettings(); updatePromptsPanel(); });
     parentBody.on('input', '#sg-preset-content-textarea', async (e) => { settings.prompts[settings.activePromptIndex].content = $(e.target).val(); await saveSettings(); });
