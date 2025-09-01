@@ -1568,7 +1568,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.1';
+    const SCRIPT_VERSION = '5.2';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -2299,8 +2299,15 @@ function showSuggestionModal(text) {
         .suggestion-buttons-wrapper { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; padding: 0 5px 4px 5px; flex-grow: 1; min-width: 0; }
         #sg-collapsible-actions { position: absolute; bottom: 100%; left: 0; width: 100%; padding-bottom: 8px; box-sizing: border-box; display: flex; justify-content: center; opacity: 0; transform: translateY(10px); pointer-events: none; transition: all 0.2s ease-out; }
         #sg-collapsible-actions.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-        #${SUGGESTION_MODAL_ID} { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 20000; animation: sgFadeIn 0.2s ease-out; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-        .sg-modal-content { position: fixed; background: var(--sg-bg-glass); border: 1px solid var(--sg-border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 90%; max-width: 500px; padding: 32px; display: flex; flex-direction: column; gap: 24px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
+        #${SUGGESTION_MODAL_ID} { 
+    position: fixed; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
+    z-index: 20000; 
+    pointer-events: none; 
+    background: transparent;
+}
+        .sg-modal-content { position: fixed; pointer-events: auto; background: var(--sg-bg-glass); border: 1px solid var(--sg-border); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); width: 90%; max-width: 500px; padding: 32px; display: flex; flex-direction: column; gap: 24px; backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .sg-modal-text { margin: 0; padding: 0; font-size: 15px; line-height: 1.7; color: #EAEAEA; max-height: 60vh; overflow-y: auto; white-space: pre-wrap; }
         .sg-modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
         .sg-modal-actions .sg-modal-button-edit {
