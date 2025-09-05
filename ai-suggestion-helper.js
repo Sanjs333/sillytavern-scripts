@@ -67,7 +67,7 @@
 **注意：最终输出的【】内部不应包含任何如[动作型]、[情感型]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -143,7 +143,7 @@
 **注意：最终输出的【】内部不应包含任何如[动作型]、[情感型]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -216,7 +216,7 @@
 **注意：最终输出的【】内部不应包含任何如[动作]、[对话]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -287,7 +287,7 @@
 **注意：最终输出的【】内部不应包含任何如[引入]、[改变]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -431,7 +431,7 @@
 - 创造新的互动契机
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -505,7 +505,7 @@
 **注意：最终输出的【】内部不应包含任何如[动作]、[言语]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -592,7 +592,7 @@
 **注意：最终输出的【】内部不应包含任何如[动作]、[言语]等分类前缀。**
 
 # 用户人设参考
-{{personality}}
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -1649,7 +1649,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.2';
+    const SCRIPT_VERSION = '5.3';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1981,13 +1981,85 @@ Note: Contextual integrity maintained. Proceeding with narrative vector evaluati
         return data.candidates[0].content.parts[0].text; 
     }
     
-    async function callSuggestionAI(aiReply, userReply, conversationFlow) {
-        const activePrompt = settings.prompts[settings.activePromptIndex];
-        if (!activePrompt) {
-            logMessage('<b>[API调用]</b> 没有可用的活动提示词。', 'error');
-            return null;
+    async function getFormattedWorldbookContent(mode = 'all') {
+    try {
+        const charWorldbooks = TavernHelper.getCharWorldbookNames('current');
+        if (!charWorldbooks || (!charWorldbooks.primary && (!charWorldbooks.additional || charWorldbooks.additional.length === 0))) {
+            return '无';
         }
-        let promptTemplate = activePrompt.content;
+
+        const worldbookNames = [];
+        if (charWorldbooks.primary) worldbookNames.push(charWorldbooks.primary);
+        if (charWorldbooks.additional) worldbookNames.push(...charWorldbooks.additional);
+        
+        let logMode;
+        switch(mode) {
+            case 'constant': logMode = '仅蓝灯(Constant)'; break;
+            case 'selective': logMode = '仅绿灯(Selective)'; break;
+            default: logMode = '全部(蓝灯+绿灯)';
+        }
+        logMessage(`[世界书] 正在以 [${logMode}] 模式加载: ${worldbookNames.join(', ')}`, 'info');
+
+        let allEntries = [];
+        for (const bookName of worldbookNames) {
+            try {
+                const entries = await TavernHelper.getWorldbook(bookName);
+                if (entries) {
+                    const filteredEntries = entries.filter(entry => {
+                        if (!entry.enabled) return false;
+                        if (mode === 'constant') {
+                            return entry.strategy && entry.strategy.type === 'constant';
+                        }
+                        if (mode === 'selective') {
+                            return entry.strategy && entry.strategy.type === 'selective';
+                        }
+                        return true;
+                    });
+                    allEntries.push(...filteredEntries);
+                }
+            } catch (error) {
+                console.error(`[AI指引助手] 加载世界书 "${bookName}" 时出错:`, error);
+            }
+        }
+
+        if (allEntries.length === 0) {
+            return '无匹配的条目';
+        }
+
+        const formattedString = allEntries
+            .map(entry => `[条目: ${entry.name}]\n${entry.content}`)
+            .join('\n\n---\n\n');
+
+        return formattedString;
+
+    } catch (error) {
+        console.error('[AI指引助手] 获取并格式化世界书时发生严重错误:', error);
+        return '获取世界书信息时出错';
+    }
+}
+
+    async function callSuggestionAI(aiReply, userReply, conversationFlow) {
+    const activePrompt = settings.prompts[settings.activePromptIndex];
+    if (!activePrompt) {
+        logMessage('<b>[API调用]</b> 没有可用的活动提示词。', 'error');
+        return null;
+    }
+    let promptTemplate = activePrompt.content;
+    promptTemplate = promptTemplate.replace('{{ai_last_reply}}', aiReply)
+                                 .replace('{{user_last_reply}}', userReply)
+                                 .replace('{{conversation_flow}}', conversationFlow);
+    if (promptTemplate.includes('{{worldbook_entries:constant}}')) {
+        const worldbookContent = await getFormattedWorldbookContent('constant');
+        promptTemplate = promptTemplate.replace('{{worldbook_entries:constant}}', worldbookContent);
+    }
+    if (promptTemplate.includes('{{worldbook_entries:selective}}')) {
+        const worldbookContent = await getFormattedWorldbookContent('selective');
+        promptTemplate = promptTemplate.replace('{{worldbook_entries:selective}}', worldbookContent);
+    }
+    if (promptTemplate.includes('{{worldbook_entries}}')) {
+        const worldbookContent = await getFormattedWorldbookContent('all');
+        promptTemplate = promptTemplate.replace('{{worldbook_entries}}', worldbookContent);
+    }
         if (settings.enableJailbreak) {
             const protocolPrefix = `
 Number：{{roll 1d999999}}
@@ -2083,34 +2155,46 @@ Number：{{roll 1d999999}}
 `;
             promptTemplate = protocolPrefix + promptTemplate + protocolSuffix;
         }
-        promptTemplate = promptTemplate.replace('{{ai_last_reply}}', aiReply).replace('{{user_last_reply}}', userReply).replace('{{conversation_flow}}', conversationFlow);
-        const finalPromptText = await SillyTavern.substituteParams(promptTemplate);
-        const sanitizedPrompt = parent$('<div>').text(finalPromptText).html();
-        logMessage(`<b>[最终提示词]</b> <pre class="final-prompt">${sanitizedPrompt}</pre>`, 'info');
-        try {
-            let content;
-            if (getActiveApiProfile().apiProvider === 'google_gemini') {
-                content = await callGoogleGeminiAPI(finalPromptText);
-            } else {
-                content = await callOpenAICompatibleAPI(finalPromptText);
-            }
-            logMessage(`<b>[AI原始返回]</b> <pre class="ai-raw-return">${parent$('<div>').text(content || '').html()}</pre>`, 'info');
-            const filteredContent = (content && typeof content === 'string') ? content.replace(/<think>.*?<\/think>/gs, '').trim() : '';
-            if (filteredContent) {
-                const matches = filteredContent.match(/【(.*?)】/gs) || [];
-                const suggestions = matches.map(match => match.replace(/[【】]/g, '').trim()).filter(text => text.length > 0);
-                if (suggestions.length > 0) {
-                    logMessage(`<b>[文本解析]</b> 成功解析 ${suggestions.length} 条建议。`, 'success');
-                    return { suggestions, activePrompt };
-                }
-            }
-            logMessage(`<b>[文本解析]</b> <b>AI返回的内容为空或格式不正确 (未找到【】)。</b>`, 'error');
-            return null;
-        } catch (error) {
-            logMessage(`<b>[API调用]</b> 发生错误: ${error.message}`, 'error');
-            return null;
-        }
+            
+    const finalPromptText = TavernHelper.substitudeMacros(promptTemplate);
+
+    if (finalPromptText.includes("{{persona}}")) {
+        logMessage('[警告] TavernHelper.substitudeMacros未能替换{{persona}}宏，内容可能仍为空。', 'warn');
+    } else if (finalPromptText.trim().endsWith("用户人设参考\n无")) {
+         logMessage('[信息] TavernHelper.substitudeMacros已将{{persona}}替换为"无"。', 'info');
     }
+    else {
+        logMessage('[信息] TavernHelper.substitudeMacros成功替换了{{persona}}宏。', 'success');
+    }
+
+
+    const sanitizedPrompt = parent$('<div>').text(finalPromptText).html();
+    logMessage(`<b>[最终提示词]</b> <pre class="final-prompt">${sanitizedPrompt}</pre>`, 'info');
+    
+    try {
+        let content;
+        if (getActiveApiProfile().apiProvider === 'google_gemini') {
+            content = await callGoogleGeminiAPI(finalPromptText);
+        } else {
+            content = await callOpenAICompatibleAPI(finalPromptText);
+        }
+        logMessage(`<b>[AI原始返回]</b> <pre class="ai-raw-return">${parent$('<div>').text(content || '').html()}</pre>`, 'info');
+        const filteredContent = (content && typeof content === 'string') ? content.replace(/<think>.*?<\/think>/gs, '').trim() : '';
+        if (filteredContent) {
+            const matches = filteredContent.match(/【(.*?)】/gs) || [];
+            const suggestions = matches.map(match => match.replace(/[【】]/g, '').trim()).filter(text => text.length > 0);
+            if (suggestions.length > 0) {
+                logMessage(`<b>[文本解析]</b> 成功解析 ${suggestions.length} 条建议。`, 'success');
+                return { suggestions, activePrompt };
+            }
+        }
+        logMessage(`<b>[文本解析]</b> <b>AI返回的内容为空或格式不正确 (未找到【】)。</b>`, 'error');
+        return null;
+    } catch (error) {
+        logMessage(`<b>[API调用]</b> 发生错误: ${error.message}`, 'error');
+        return null;
+    }
+}
 
     function generateButtonLabels(suggestions, activePrompt) {
         const customLabelsRegex = /#BUTTONS:\s*(.*)/i;
@@ -3167,8 +3251,21 @@ function bindCoreEvents() {
 - 所有【】建议块之间必须紧密相连
 - 所有建议中都不能出现【】符号
 
-# 用户人设参考
-{{personality}}
+# 世界书内容参考(可选，按需添加)
+//（获取全部已启用条目，蓝灯+绿灯）
+{{worldbook_entries}}
+
+//（只获取已启用蓝灯条目，与上面的三选一）
+{{worldbook_entries:constant}}
+
+//（只获取已启用绿灯条目，与上面的三选一）
+{{worldbook_entries:selective}}
+
+# 角色人设参考（可选，按需添加）
+{{description}}
+
+# 用户人设参考（可选，按需添加）
+{{persona}}
 
 # 对话上下文
 [最近对话流程]:
@@ -3393,7 +3490,8 @@ function waitForTavernTools() {
     console.log('[AI指引助手] 正在脚本内部等待核心工具...');
 
     if (
-        typeof SillyTavern !== 'undefined' &&
+        typeof window.parent.SillyTavern !== 'undefined' &&
+        typeof window.parent.SillyTavern.getContext === 'function' && 
         typeof TavernHelper !== 'undefined' &&
         typeof eventOn !== 'undefined' &&
         typeof tavern_events !== 'undefined' &&
