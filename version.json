@@ -1,5 +1,15 @@
 {
-  "version": "5.3",
-  "commit": "97887882ce196768643c09d8302e7bfd7371b045",
-  "notes": "<b>v5.3 更新：增加宏支持 & 稳定性修复</b><br><br>- <b>【核心功能修复】</b> 修复了无法正确读取<b>用户人设</b> 的问题。<br>- <b>【重要提示】</b> 为确保此修复生效，请在“预设”管理页面点击<b>“恢复/更新官方预设”</b>按钮 <i class='fa-solid fa-wand-magic-sparkles' style='color: #ED8936;'></i>，将内置预设模板更新为使用正确的 <code>{{persona}}</code> 宏，自创建预设请自行修改。<br><br>- <b>【功能新增】</b> 新增对<b>世界书 </b> 的宏支持。现在可以在自定义预设中添加 <code>{{worldbook_entries}}</code>, <code>{{worldbook_entries:constant}}</code>, 或 <code>{{worldbook_entries:selective}}</code>。<br>- <b>【细节优化】</b> 优化了宏替换逻辑，提高了与SillyTavern内部机制的兼容性，使提示词生成更加可靠。"
+  "latest_version": "5.4",
+  "history": [
+    {
+      "version": "5.4",
+      "commit": "0d4ff14e058e43a10bf577c6e42e69faa3048a69",
+      "notes": "<b>v5.4 更新：功能修复 & 智能更新通知</b><br><br>- <b>【功能修复】</b> 修复了“<b>导入预设</b>”功能。现在无论是导入单个预设（添加/覆盖）还是导入全部预设（替换），插件都能智能识别并正确处理。<br>- <b>【体验升级】</b> 新增了<b>更新通知</b>系统，插件后台自动更新后，下次打开将在设置顶部看到本次的更新日志。<b>【细节优化】</b> 调整了更新通知横幅的UI布局。"
+    },
+    {
+      "version": "5.3",
+      "commit": "97887882ce196768643c09d8302e7bfd7371b045",
+      "notes": "<b>v5.3 更新：增加宏支持 & 稳定性修复</b><br><br>- <b>【核心功能修复】</b> 修复了无法正确读取<b>用户人设</b> 的问题。<br>- <b>【重要提示】</b> 为确保此修复生效，请在“预设”管理页面点击<b>“恢复/更新官方预设”</b>按钮 <i class='fa-solid fa-wand-magic-sparkles' style='color: #ED8936;'></i>，将内置预设模板更新为使用正确的 <code>{{persona}}</code> 宏，自创建预设请自行修改。<br><br>- <b>【功能新增】</b> 新增对<b>世界书</b> 的宏支持。现在可以在自定义预设中添加 <code>{{worldbook_entries}}</code>, <code>{{worldbook_entries:constant}}</code>, 或 <code>{{worldbook_entries:selective}}</code>。<br>- <b>【细节优化】</b> 优化了宏替换逻辑，提高了与SillyTavern内部机制的兼容性，使提示词生成更加可靠。"
+    },
+  ]
 }
