@@ -1650,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.5';
+    const SCRIPT_VERSION = '5.51';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1737,11 +1737,6 @@
         }
     }
 }
-
-parentBody.on('click', '#sg-check-for-updates-btn', function(event) {
-    event.preventDefault();
-    checkForUpdates(true);
-});
 
     function showUpdateNotification(logs, latestVersion, latestCommitHash, needsUpdate) {
     let logsHtml = logs.map(log => log.notes).join('<hr class="sg-hr" style="margin: 12px 0;">');
@@ -3292,6 +3287,10 @@ function bindCoreEvents() {
         $icon.addClass('fa-cloud-arrow-down');
         $btn.prop('disabled', false);
     }
+});
+    parentBody.on('click', '#sg-check-for-updates-btn', function(event) {
+    event.preventDefault();
+    checkForUpdates(true);
 });
     parentBody.on('click', `#${OVERLAY_ID}`, async function(e) { if (e.target.id === OVERLAY_ID || parent$(e.target).hasClass('panel-close-btn')) { parent$(`#${OVERLAY_ID}`).hide(); } });
     parent$(window.parent).on('resize', () => { if (parent$(`#${OVERLAY_ID}`).is(':visible')) { centerElement(parent$(`#${PANEL_ID}`)[0]); } });
