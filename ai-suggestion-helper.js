@@ -1650,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.4';
+    const SCRIPT_VERSION = '5.5';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1683,96 +1683,139 @@
         }
     }
 
-    async function checkForUpdates() {
-        if (isCheckingForUpdates) return;
-        isCheckingForUpdates = true;
-        
-        try {
-            const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json`, { cache: 'no-store' });
-            if (!response.ok) {
-                logMessage('检查更新失败：无法连接到版本服务器。', 'error');
-                return;
+    async function checkForUpdates(isManualCheck = false) {
+    if (isCheckingForUpdates) return;
+    isCheckingForUpdates = true;
+    const $updateBtn = isManualCheck ? parent$('#sg-check-for-updates-btn') : null;
+    const $icon = $updateBtn ? $updateBtn.find('i') : null;
+    if (isManualCheck) {
+        $updateBtn.prop('disabled', true);
+        $icon.removeClass('fa-cloud-arrow-down fa-check').addClass('fa-spinner fa-spin');
+    }
+
+    try {
+        const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json`, { cache: 'no-store' });
+        if (!response.ok) {
+            throw new Error(`无法连接到版本服务器 (状态: ${response.status})`);
+        }
+        const data = await response.json();
+        const latestVersion = data.latest_version;
+        const history = data.history;
+        const lastSeenVersion = localStorage.getItem(LAST_SEEN_VERSION_KEY) || '0.0';
+
+        const currentVersionFloat = parseFloat(SCRIPT_VERSION);
+        const latestVersionFloat = parseFloat(latestVersion);
+        const lastSeenVersionFloat = parseFloat(lastSeenVersion);
+
+        const needsUpdate = latestVersionFloat > currentVersionFloat;
+        const hasUnseenLogs = latestVersionFloat > lastSeenVersionFloat;
+
+        if (hasUnseenLogs) {
+            const newLogs = history.filter(log => parseFloat(log.version) > lastSeenVersionFloat)
+                                   .sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
+
+            if (newLogs.length > 0) {
+                const latestCommitHash = history.find(h => h.version === latestVersion)?.commit;
+                showUpdateNotification(newLogs, latestVersion, latestCommitHash, needsUpdate);
             }
-            const data = await response.json();
-            const latestVersion = data.latest_version;
-            const history = data.history;
-            const lastSeenVersion = localStorage.getItem(LAST_SEEN_VERSION_KEY) || '0.0';
+        } 
+        else if (isManualCheck) { 
+            logMessage(`v${SCRIPT_VERSION} 已是最新版本。`, 'success');
+            if ($icon) $icon.removeClass('fa-spinner fa-spin').addClass('fa-check');
+        }
 
-            const currentVersionFloat = parseFloat(SCRIPT_VERSION);
-            const latestVersionFloat = parseFloat(latestVersion);
-            const lastSeenVersionFloat = parseFloat(lastSeenVersion);
-
-            const needsUpdate = latestVersionFloat > currentVersionFloat;
-            const hasUnseenLogs = latestVersionFloat > lastSeenVersionFloat;
-
-            if (hasUnseenLogs) {
-                const newLogs = history.filter(log => parseFloat(log.version) > lastSeenVersionFloat)
-                                       .sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
-
-                if (newLogs.length > 0) {
-                    const latestCommitHash = history[0].commit;
-                    showUpdateNotification(newLogs, latestVersion, latestCommitHash, needsUpdate);
-                }
-            }
-
-        } catch (error) {
-            logMessage(`检查更新失败: ${error.message}`, 'error');
-            console.error('[AI指引助手] 检查更新失败:', error);
-        } finally {
-            isCheckingForUpdates = false;
+    } catch (error) {
+        logMessage(`检查更新失败: ${error.message}`, 'error');
+        if ($icon) $icon.removeClass('fa-spinner fa-spin').addClass('fa-triangle-exclamation');
+    } finally {
+        isCheckingForUpdates = false;
+        if (isManualCheck) {
+            setTimeout(() => {
+                 if ($updateBtn) $updateBtn.prop('disabled', false);
+                 if ($icon) $icon.removeClass('fa-spinner fa-spin fa-triangle-exclamation fa-check').addClass('fa-cloud-arrow-down');
+            }, 2000);
         }
     }
+}
+
+parentBody.on('click', '#sg-check-for-updates-btn', function(event) {
+    event.preventDefault();
+    checkForUpdates(true);
+});
+
     function showUpdateNotification(logs, latestVersion, latestCommitHash, needsUpdate) {
-        let logsHtml = logs.map(log => log.notes).join('<hr class="sg-hr" style="margin: 12px 0;">');
+    let logsHtml = logs.map(log => log.notes).join('<hr class="sg-hr" style="margin: 12px 0;">');
 
-        const buttonText = needsUpdate ? "更新并刷新" : "我知道了";
-        const buttonId = needsUpdate ? "sg-force-update-btn" : "sg-acknowledge-update-btn";
+    let buttonText = "我知道了";
+    let buttonId = "sg-acknowledge-update-btn";
 
-        const $notifier = parent$('#sg-update-notifier');
-        
-        const notifierHtml = `
-            <div class="update-info">
-                <strong>✨ AI指引助手有新的更新日志</strong>
-                <div class="notes">${logsHtml}</div>
-            </div>
-            <div class="update-actions">
+    if (needsUpdate) {
+        buttonText = "更新并刷新";
+        buttonId = "sg-force-update-btn";
+    }
+
+    const $notifier = parent$('#sg-update-notifier');
+    
+    const notifierHtml = `
+        <div class="update-info">
+            <strong>✨ AI指引助手有新的更新日志 (v${latestVersion})</strong>
+            <div class="notes">${logsHtml}</div>
+        </div>
+        <div class="update-actions">
+            <div id="sg-update-btn-wrapper" class="sg-button-wrapper">
                 <button id="${buttonId}" class="sg-button primary">${buttonText}</button>
             </div>
-        `;
+        </div>
+    `;
+    
+    $notifier.html(notifierHtml).css('display', 'block');
+
+    parent$('body').off('click.update').on('click.update', `#${buttonId}`, function(event) {
+        event.preventDefault();
+        const $btn = parent$(this);
+
+        localStorage.setItem(LAST_SEEN_VERSION_KEY, latestVersion);
         
-        $notifier.html(notifierHtml).css('display', 'block');
-
-        parent$('body').off('click.update').on('click.update', `#${buttonId}`, function(event) {
-            event.preventDefault();
-            const $btn = parent$(this);
-
-            localStorage.setItem(LAST_SEEN_VERSION_KEY, latestVersion);
-            
-            if (needsUpdate) {
-                $btn.text('正在应用更新...').prop('disabled', true);
-                logMessage(`用户点击更新至 v${latestVersion}，即将刷新。`, 'info');
-                
-                try {
-                    if (latestCommitHash) {
-                        const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
-                        const data = { hash: latestCommitHash, timestamp: Date.now() };
-                        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-                    } else {
-                        localStorage.removeItem('ai_suggestion_helper_commit_cache');
-                    }
-                } catch (e) {
-                    console.error('[AI指引助手 更新程序] 写入缓存失败。', e);
-                } finally {
-                    setTimeout(() => {
-                        window.parent.location.reload();
-                    }, 300);
+        if (needsUpdate) {
+            $btn.prop('disabled', true);
+            try {
+                if (latestCommitHash) {
+                    const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
+                    const data = { hash: latestCommitHash, timestamp: Date.now() };
+                    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                } else {
+                    localStorage.removeItem('ai_suggestion_helper_commit_cache');
                 }
-            } else {
-                logMessage(`用户已确认阅读 v${latestVersion} 的更新日志。`, 'info');
-                $notifier.slideUp(300, () => $notifier.empty());
+                logMessage(`用户点击更新至 v${latestVersion}。新版本信息已写入缓存，准备自动刷新...`, 'info');
+            } catch (e) {
+                console.error('[AI指引助手 更新程序] 写入缓存失败。', e);
+                $btn.text('写入失败，请重试').css('background-color', '#E53E3E');
+                return;
             }
-        });
-    }
+
+            $btn.html('<span class="sg-progress-bar"></span><span class="sg-progress-text">正在应用更新... 3</span>');
+            
+            let countdown = 2;
+            const interval = setInterval(() => {
+                if (countdown > 0) {
+                    $btn.find('.sg-progress-text').text(`正在应用更新... ${countdown}`);
+                    countdown--;
+                } else {
+                    $btn.find('.sg-progress-text').text(`即将刷新...`);
+                }
+            }, 1000);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                window.parent.location.reload();
+            }, 2500);
+
+        } else {
+            logMessage(`用户已确认阅读 v${latestVersion} 的更新日志。`, 'info');
+            $notifier.slideUp(300, () => $notifier.empty());
+        }
+    });
+}
 
     async function loadSettings() {
         if (typeof TavernHelper === 'undefined' || !TavernHelper.getVariables) {
@@ -2564,9 +2607,12 @@ function showSuggestionModal(text) {
             background: rgba(119, 85, 185, 0.2);
             border-bottom: 1px solid var(--sg-border);
             display: none;
+            flex-direction: column;
+            max-height: 70vh;
         }
         #sg-update-notifier .update-info {
             margin-bottom: 16px;
+            min-height: 0;
         }
         #sg-update-notifier .update-info strong {
             font-size: 16px;
@@ -2578,9 +2624,18 @@ function showSuggestionModal(text) {
             font-size: 13px;
             line-height: 1.7;
             color: var(--sg-text-muted);
+            max-height: 30vh;
+            overflow-y: auto;
+            padding-right: 10px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        #sg-update-notifier .update-info .notes::-webkit-scrollbar {
+            display: none;
         }
         #sg-update-notifier .update-actions {
             text-align: right;
+            flex-shrink: 0;
         }
         #sg-update-notifier .sg-button {
             width: auto;
@@ -2588,6 +2643,32 @@ function showSuggestionModal(text) {
             padding-right: 20px;
             flex-shrink: 0;
             white-space: nowrap;
+        }
+        #sg-update-btn-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        #sg-update-btn-wrapper .sg-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 0%;
+            background-color: rgba(72, 187, 120, 0.6);
+            border-radius: var(--sg-radius);
+            transition: width 2.5s linear;
+        }
+        #sg-update-btn-wrapper .sg-progress-text {
+            position: relative;
+            z-index: 1;
+        }
+        #sg-force-update-btn:disabled {
+            background-color: var(--sg-accent);
+            opacity: 0.7;
+            cursor: wait;
+        }
+        #sg-force-update-btn:disabled .sg-progress-bar {
+            width: 100%;
         }
 .sg-api-param-input {
     text-align: center;
@@ -3587,4 +3668,3 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
-
