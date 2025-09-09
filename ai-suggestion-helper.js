@@ -1688,7 +1688,7 @@
         isCheckingForUpdates = true;
         
         try {
-            const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json?t=${Date.now()}`);
+            const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json`, { cache: 'no-store' });
             if (!response.ok) {
                 logMessage('检查更新失败：无法连接到版本服务器。', 'error');
                 return;
@@ -3587,3 +3587,4 @@ function waitForTavernTools() {
 waitForTavernTools();
 
 })();
+
