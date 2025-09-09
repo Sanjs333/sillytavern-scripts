@@ -1,7 +1,12 @@
 {
-  "latest_version": "5.5",
-  "version": "5.5",
+  "latest_version": "5.51",
+  "version": "5.51",
   "history": [
+    {
+      "version": "5.5.1",
+      "commit": "68928b32a4dac86a57ac6a86b593cdf7cf97f2e3",
+      "notes": "<b>v5.5.1 紧急修复</b><br><br>- 修复导致“检查更新”按钮功能异常的BUG。"
+    },
     {
       "version": "5.5",
       "commit": "2b58b43ddf19327b35cef40edb7ef00d1aa5d4f7",
