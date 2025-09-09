@@ -4,6 +4,11 @@
   "version": "5.6",
   "history": [
     {
+      "version": "5.7",
+      "commit": "a582cbab64ca853f0ba79a5c02aaff71af04a3b0",
+      "notes": "<b>v5.7 增加空回日志</b><br><br>- 当API空回将在日志内显示反馈。"
+    },
+    {
       "version": "5.6",
       "commit": "754d83a581adc65e70176cee566851b306d96faf",
       "notes": "<b>v5.6 修复更新反馈</b><br><br>- 修复“检查更新”按钮功能的显示反馈。"
