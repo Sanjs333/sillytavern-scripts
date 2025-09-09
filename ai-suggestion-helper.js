@@ -4,6 +4,7 @@
     const SUGGESTION_CONTAINER_ID = 'ai-reply-suggestion-container';
     const SUGGESTION_MODAL_ID = 'ai-reply-suggestion-modal';
     const LOG_PREFIX = '[回复建议插件]';
+    const LAST_SEEN_VERSION_KEY = 'ai_suggestion_helper_last_seen_version';
 
     const DEFAULT_PROMPTS = [
         {
@@ -1649,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.3';
+    const SCRIPT_VERSION = '5.4';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1683,76 +1684,95 @@
     }
 
     async function checkForUpdates() {
-    if (isCheckingForUpdates) {
-        logMessage('更新检查已在进行中，请稍候...', 'warn');
-        return null;
-    }
-    isCheckingForUpdates = true;
-    try {
-        const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json?t=${Date.now()}`);
-        if (!response.ok) {
-            logMessage('检查更新失败：无法连接到版本服务器。', 'error');
-            return false;
-        }
-        const latest = await response.json();
-        const currentVersion = parseFloat(SCRIPT_VERSION);
-        const latestVersion = parseFloat(latest.version);
-        if (latestVersion > currentVersion) {
-            showUpdateNotification(latest);
-            return true;
-        } else {
-            logMessage('已经是最新版本。', 'success');
-            return false;
-        }
-    } catch (error) {
-        logMessage(`检查更新失败: ${error.message}`, 'error');
-        console.error('[AI指引助手] 检查更新失败:', error);
-        return false;
-    } finally {
-        isCheckingForUpdates = false;
-    }
-}
-
-    function showUpdateNotification(latest) {
-    const version = latest.version;
-    let notes = latest.notes;
-    notes += '<br><b>注意：点击更新后，插件将自动刷新整个页面以应用新版本。</b>';
-    const latestCommitHash = latest.commit;
-
-    const $notifier = parent$('#sg-update-notifier');
-    const notifierHtml = `
-        <div class="update-info">
-            <strong>发现新版本 v${version}！</strong>
-            <div class="notes">${notes}</div>
-        </div>
-        <button id="sg-force-update-btn" class="sg-button primary">更新并刷新</button>
-    `;
-    $notifier.html(notifierHtml).css('display', 'flex');
-
-    parent$('body').off('click.update').on('click.update', '#sg-force-update-btn', function(event) {
-        event.preventDefault();
-        const $btn = parent$(this);
-        $btn.text('更新中...').prop('disabled', true);
-
+        if (isCheckingForUpdates) return;
+        isCheckingForUpdates = true;
+        
         try {
-            if (latestCommitHash) {
-                const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
-                const data = { hash: latestCommitHash, timestamp: Date.now() };
-                localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-                console.log(`[AI指引助手 更新程序] 已将新版本 (${latestCommitHash.substring(0,7)}) 信息写入缓存，准备刷新。`);
-            } else {
-                console.warn('[AI指引助手 更新程序] version.json 中未找到 commit ID，将清空缓存后刷新。');
-                localStorage.removeItem('ai_suggestion_helper_commit_cache');
+            const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json?t=${Date.now()}`);
+            if (!response.ok) {
+                logMessage('检查更新失败：无法连接到版本服务器。', 'error');
+                return;
             }
-        } catch (e) {
-            console.error('[AI指引助手 更新程序] 写入缓存失败，但仍将尝试刷新。', e);
+            const data = await response.json();
+            const latestVersion = data.latest_version;
+            const history = data.history;
+            const lastSeenVersion = localStorage.getItem(LAST_SEEN_VERSION_KEY) || '0.0';
+
+            const currentVersionFloat = parseFloat(SCRIPT_VERSION);
+            const latestVersionFloat = parseFloat(latestVersion);
+            const lastSeenVersionFloat = parseFloat(lastSeenVersion);
+
+            const needsUpdate = latestVersionFloat > currentVersionFloat;
+            const hasUnseenLogs = latestVersionFloat > lastSeenVersionFloat;
+
+            if (hasUnseenLogs) {
+                const newLogs = history.filter(log => parseFloat(log.version) > lastSeenVersionFloat)
+                                       .sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
+
+                if (newLogs.length > 0) {
+                    const latestCommitHash = history[0].commit;
+                    showUpdateNotification(newLogs, latestVersion, latestCommitHash, needsUpdate);
+                }
+            }
+
+        } catch (error) {
+            logMessage(`检查更新失败: ${error.message}`, 'error');
+            console.error('[AI指引助手] 检查更新失败:', error);
         } finally {
-            setTimeout(() => {
-                window.parent.location.reload();
-            }, 300);
+            isCheckingForUpdates = false;
         }
-    });
-}
+    }
+    function showUpdateNotification(logs, latestVersion, latestCommitHash, needsUpdate) {
+        let logsHtml = logs.map(log => log.notes).join('<hr class="sg-hr" style="margin: 12px 0;">');
+
+        const buttonText = needsUpdate ? "更新并刷新" : "我知道了";
+        const buttonId = needsUpdate ? "sg-force-update-btn" : "sg-acknowledge-update-btn";
+
+        const $notifier = parent$('#sg-update-notifier');
+        
+        const notifierHtml = `
+            <div class="update-info">
+                <strong>✨ AI指引助手有新的更新日志</strong>
+                <div class="notes">${logsHtml}</div>
+            </div>
+            <div class="update-actions">
+                <button id="${buttonId}" class="sg-button primary">${buttonText}</button>
+            </div>
+        `;
+        
+        $notifier.html(notifierHtml).css('display', 'block');
+
+        parent$('body').off('click.update').on('click.update', `#${buttonId}`, function(event) {
+            event.preventDefault();
+            const $btn = parent$(this);
+
+            localStorage.setItem(LAST_SEEN_VERSION_KEY, latestVersion);
+            
+            if (needsUpdate) {
+                $btn.text('正在应用更新...').prop('disabled', true);
+                logMessage(`用户点击更新至 v${latestVersion}，即将刷新。`, 'info');
+                
+                try {
+                    if (latestCommitHash) {
+                        const CACHE_KEY = 'ai_suggestion_helper_commit_cache';
+                        const data = { hash: latestCommitHash, timestamp: Date.now() };
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+                    } else {
+                        localStorage.removeItem('ai_suggestion_helper_commit_cache');
+                    }
+                } catch (e) {
+                    console.error('[AI指引助手 更新程序] 写入缓存失败。', e);
+                } finally {
+                    setTimeout(() => {
+                        window.parent.location.reload();
+                    }, 300);
+                }
+            } else {
+                logMessage(`用户已确认阅读 v${latestVersion} 的更新日志。`, 'info');
+                $notifier.slideUp(300, () => $notifier.empty());
+            }
+        });
+    }
 
     async function loadSettings() {
         if (typeof TavernHelper === 'undefined' || !TavernHelper.getVariables) {
@@ -2540,31 +2560,35 @@ function showSuggestionModal(text) {
         .sg-css-editor-wrapper > .sg-css-label { flex-shrink: 0; }
         .sg-css-editor-wrapper > textarea { flex-grow: 1; width: 100%; min-height: 120px; resize: vertical; }
         #sg-update-notifier {
-    padding: 12px 16px;
-    background: rgba(119, 85, 185, 0.2);
-    border-bottom: 1px solid var(--sg-border);
-    display: none;
-    align-items: center;
-    gap: 15px;
-}
-        #sg-update-notifier .sg-button {
-    flex-shrink: 0;
-    white-space: nowrap;
-}
+            padding: 16px;
+            background: rgba(119, 85, 185, 0.2);
+            border-bottom: 1px solid var(--sg-border);
+            display: none;
+        }
         #sg-update-notifier .update-info {
-    flex-grow: 1;
-}
+            margin-bottom: 16px;
+        }
         #sg-update-notifier .update-info strong {
-    font-size: 15px;
-    color: var(--sg-text);
-    display: block;
-    margin-bottom: 5px;
-}
+            font-size: 16px;
+            color: var(--sg-text);
+            display: block;
+            margin-bottom: 12px;
+        }
         #sg-update-notifier .update-info .notes {
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--sg-text-muted);
-}
+            font-size: 13px;
+            line-height: 1.7;
+            color: var(--sg-text-muted);
+        }
+        #sg-update-notifier .update-actions {
+            text-align: right;
+        }
+        #sg-update-notifier .sg-button {
+            width: auto;
+            padding-left: 20px;
+            padding-right: 20px;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
 .sg-api-param-input {
     text-align: center;
 }
@@ -3285,6 +3309,61 @@ function bindCoreEvents() {
 });
     parentBody.on('click', '#sg-export-prompts-btn', () => { try { const dataStr = JSON.stringify(settings.prompts, null, 2); const blob = new Blob([dataStr], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = parentDoc.createElement('a'); a.href = url; a.download = 'ai-指引助手-全部预设.json'; a.click(); URL.revokeObjectURL(url); logMessage('全部预设已成功导出。', 'success'); } catch (error) { logMessage(`导出预设时出错: ${error.message}`, 'error'); } });
     parentBody.on('click', '#sg-import-prompts-btn', () => { parent$('#sg-prompt-file-input').click(); });
+    parentBody.on('change', '#sg-prompt-file-input', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                if (Array.isArray(importedData)) {
+                    if (!importedData.every(p => typeof p.name === 'string' && typeof p.content === 'string')) {
+                        throw new Error('预设合集文件格式无效。');
+                    }
+                    if (confirm(`这将用文件中的【${importedData.length}】条预设，替换掉您所有的【${settings.prompts.length}】条预设，确定吗？`)) {
+                        settings.prompts = importedData;
+                        settings.activePromptIndex = 0;
+                        settings.defaultPromptIndex = 0;
+                        await saveSettings();
+                        updatePromptsPanel();
+                        logMessage(`成功导入 ${importedData.length} 个预设。`, 'success');
+                    } else {
+                        logMessage('取消了导入操作。', 'info');
+                    }
+
+                } else if (typeof importedData === 'object' && importedData !== null && 'name' in importedData && 'content' in importedData) {
+                    const existingPromptIndex = settings.prompts.findIndex(p => p.name === importedData.name);
+
+                    if (existingPromptIndex !== -1) {
+                        if (confirm(`您已有一个名为 "${importedData.name}" 的预设。要用导入的文件覆盖它吗？`)) {
+                            settings.prompts[existingPromptIndex] = importedData;
+                            settings.activePromptIndex = existingPromptIndex;
+                            await saveSettings();
+                            updatePromptsPanel();
+                            logMessage(`已成功覆盖预设 "${importedData.name}"。`, 'success');
+                        } else {
+                            logMessage(`取消了覆盖预设 "${importedData.name}" 的操作。`, 'info');
+                        }
+                    } else {
+                        settings.prompts.push(importedData);
+                        settings.activePromptIndex = settings.prompts.length - 1;
+                        await saveSettings();
+                        updatePromptsPanel();
+                        logMessage(`成功添加新预设 "${importedData.name}"。`, 'success'); 
+                    }
+
+                } else {
+                    throw new Error('无法识别的文件格式。请确保是正确的预设导出文件。');
+                }
+            } catch (error) {
+                logMessage(`导入预设失败: ${error.message}`, 'error');
+                alert(`导入失败: ${error.message}`);
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    });
     parentBody.on('click', '#sg-restore-defaults-btn', restoreDefaultPrompts);
     parentBody.on('change', '#sg-preset-select', async (e) => { settings.activePromptIndex = parseInt($(e.target).val()); await saveSettings(); updatePromptsPanel(); });
     parentBody.on('click', '#sg-save-preset-name-btn', async function() { const newName = parent$('#sg-preset-name-input').val(); if (newName) { settings.prompts[settings.activePromptIndex].name = newName; logMessage('预设名称已保存。', 'success'); } const currentChar = TavernHelper.getCharData(); if (currentChar) { const charId = currentChar.avatar; const charName = currentChar.name; const activePresetIndex = settings.activePromptIndex; if (settings.characterBindings[charId] === activePresetIndex) { delete settings.characterBindings[charId]; logMessage(`已解除预设 \"<b>${newName}</b>\" 与角色 \"<b>${charName}</b>\" 的绑定。`, 'success'); } else { settings.characterBindings[charId] = activePresetIndex; logMessage(`已将预设 \"<b>${newName}</b>\" 绑定到角色 \"<b>${charName}</b>\"。`, 'success'); } } else { logMessage('无法获取当前角色信息，仅保存名称。', 'warn'); } await saveSettings(); updatePromptsPanel(); });
