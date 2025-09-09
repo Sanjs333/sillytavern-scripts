@@ -1650,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.51';
+    const SCRIPT_VERSION = '5.6';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1686,8 +1686,10 @@
     async function checkForUpdates(isManualCheck = false) {
     if (isCheckingForUpdates) return;
     isCheckingForUpdates = true;
+    
     const $updateBtn = isManualCheck ? parent$('#sg-check-for-updates-btn') : null;
     const $icon = $updateBtn ? $updateBtn.find('i') : null;
+    
     if (isManualCheck) {
         $updateBtn.prop('disabled', true);
         $icon.removeClass('fa-cloud-arrow-down fa-check').addClass('fa-spinner fa-spin');
@@ -1695,9 +1697,8 @@
 
     try {
         const response = await fetch(`https://raw.githubusercontent.com/Sanjs333/sillytavern-scripts/main/version.json`, { cache: 'no-store' });
-        if (!response.ok) {
-            throw new Error(`无法连接到版本服务器 (状态: ${response.status})`);
-        }
+        if (!response.ok) throw new Error(`无法连接到版本服务器 (状态: ${response.status})`);
+        
         const data = await response.json();
         const latestVersion = data.latest_version;
         const history = data.history;
@@ -1710,13 +1711,16 @@
         const needsUpdate = latestVersionFloat > currentVersionFloat;
         const hasUnseenLogs = latestVersionFloat > lastSeenVersionFloat;
 
-        if (hasUnseenLogs) {
+        if (needsUpdate || (hasUnseenLogs && isManualCheck)) {
             const newLogs = history.filter(log => parseFloat(log.version) > lastSeenVersionFloat)
                                    .sort((a, b) => parseFloat(b.version) - parseFloat(a.version));
 
             if (newLogs.length > 0) {
                 const latestCommitHash = history.find(h => h.version === latestVersion)?.commit;
                 showUpdateNotification(newLogs, latestVersion, latestCommitHash, needsUpdate);
+            } else if (isManualCheck && !needsUpdate) {
+                logMessage(`v${SCRIPT_VERSION} 已是最新版本。`, 'success');
+                if ($icon) $icon.removeClass('fa-spinner fa-spin').addClass('fa-check');
             }
         } 
         else if (isManualCheck) { 
@@ -3259,35 +3263,6 @@ function bindCoreEvents() {
         updatePromptsPanel(); 
         updateAppearancePanel(); 
     });
-    parentBody.on('click', '#sg-check-for-updates-btn', async function(event) {
-    event.preventDefault();
-    if (parent$('#sg-update-notifier').is(':visible')) {
-        logMessage('已检测到更新，将直接触发更新流程...', 'info');
-        parent$('#sg-force-update-btn').trigger('click');
-        return;
-    }
-
-    const $btn = $(this);
-    const $icon = $btn.find('i');
-
-    if (isCheckingForUpdates) return;
-    
-    $btn.prop('disabled', true);
-    $icon.removeClass('fa-cloud-arrow-down fa-check').addClass('fa-spinner fa-spin');
-    const hasUpdate = await checkForUpdates();
-    $icon.removeClass('fa-spinner fa-spin');
-    if (hasUpdate === false) {
-        $icon.addClass('fa-check');
-        setTimeout(() => {
-            $icon.removeClass('fa-check').addClass('fa-cloud-arrow-down');
-            $btn.prop('disabled', false);
-        }, 2000);
-    } 
-    else {
-        $icon.addClass('fa-cloud-arrow-down');
-        $btn.prop('disabled', false);
-    }
-});
     parentBody.on('click', '#sg-check-for-updates-btn', function(event) {
     event.preventDefault();
     checkForUpdates(true);
