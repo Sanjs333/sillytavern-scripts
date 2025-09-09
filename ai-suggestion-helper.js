@@ -1650,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.6';
+    const SCRIPT_VERSION = '5.7';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -1984,30 +1984,36 @@ Note: Contextual integrity maintained. Proceeding with narrative vector evaluati
     }
     
     async function callOpenAICompatibleAPI(promptText) {
-        logMessage(`<b>[API 调用]</b> 正在使用 OpenAI 兼容模式...`);
-        const activeProfile = getActiveApiProfile();
-        const body = {
-            model: activeProfile.model,
-            messages: [{ role: 'user', content: promptText }],
-            temperature: activeProfile.temperature,
-            top_p: activeProfile.top_p,
-            max_tokens: activeProfile.max_tokens
-        };
-        const bodyForLog = { ...body };
-        delete bodyForLog.messages;
-        logMessage(`<b>[请求体参数]</b> <pre>${JSON.stringify(bodyForLog, null, 2)}</pre>`, 'info');
-        const headers = { 'Content-Type': 'application/json' };
-        if (activeProfile.apiKey && activeProfile.apiKey.trim() !== '') {
-            headers['Authorization'] = `Bearer ${activeProfile.apiKey}`;
-        }
-        const response = await fetch(`${activeProfile.baseUrl}/chat/completions`, { method: 'POST', headers, body: JSON.stringify(body) });
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
-            throw new Error(errorData.error ? errorData.error.message : response.statusText);
-        }
-        const data = await response.json();
-        return data.choices[0].message.content;
+    logMessage(`<b>[API 调用]</b> 正在使用 OpenAI 兼容模式...`);
+    const activeProfile = getActiveApiProfile();
+    const body = {
+        model: activeProfile.model,
+        messages: [{ role: 'user', content: promptText }],
+        temperature: activeProfile.temperature,
+        top_p: activeProfile.top_p,
+        max_tokens: activeProfile.max_tokens
+    };
+    const bodyForLog = { ...body };
+    delete bodyForLog.messages;
+    logMessage(`<b>[请求体参数]</b> <pre>${JSON.stringify(bodyForLog, null, 2)}</pre>`, 'info');
+    const headers = { 'Content-Type': 'application/json' };
+    if (activeProfile.apiKey && activeProfile.apiKey.trim() !== '') {
+        headers['Authorization'] = `Bearer ${activeProfile.apiKey}`;
     }
+    const response = await fetch(`${activeProfile.baseUrl}/chat/completions`, { method: 'POST', headers, body: JSON.stringify(body) });
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: { message: response.statusText } }));
+        throw new Error(errorData.error ? errorData.error.message : response.statusText);
+    }
+    const data = await response.json();
+
+    if (data && data.choices && data.choices.length > 0 && data.choices[0].message) {
+        return data.choices[0].message.content;
+    } else {
+        console.error("API返回了空的或无效的回复结构:", data);
+        throw new Error("API返回了空的或无效的回复。可能由于内容安全策略被触发。");
+    }
+}
     
     async function callGoogleGeminiAPI(promptText) { 
         logMessage(`<b>[API 调用]</b> 正在使用 Google AI (Gemini) 直连模式...`); 
