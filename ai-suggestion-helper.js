@@ -1650,7 +1650,7 @@
         return settings.apiProfiles[settings.activeApiProfileIndex];
     }
 
-    const SCRIPT_VERSION = '5.7';
+    const SCRIPT_VERSION = '5.8';
     const BUTTON_ID = 'suggestion-generator-ext-button';
     const PANEL_ID = 'suggestion-generator-settings-panel';
     const OVERLAY_ID = 'suggestion-generator-settings-overlay';
@@ -3259,15 +3259,18 @@ function bindCoreEvents() {
             cleanupSuggestions();
         }
     });
-    parentBody.on('click', `#${BUTTON_ID}`, (event) => { 
-        event.stopPropagation(); 
-        const $overlay = parent$(`#${OVERLAY_ID}`); 
-        $overlay.show(); 
-        const $panel = $overlay.find(`#${PANEL_ID}`); 
-        centerElement($panel[0]); 
-        updateApiPanel(); 
-        updatePromptsPanel(); 
-        updateAppearancePanel(); 
+    parentBody.on('click', `#${BUTTON_ID}`, (event) => {
+        event.stopPropagation();
+        parent$('body').trigger('click');
+        setTimeout(() => {
+            const $overlay = parent$(`#${OVERLAY_ID}`);
+            $overlay.show();
+            const $panel = $overlay.find(`#${PANEL_ID}`);
+            centerElement($panel[0]);
+            updateApiPanel();
+            updatePromptsPanel();
+            updateAppearancePanel();
+        }, 100);
     });
     parentBody.on('click', '#sg-check-for-updates-btn', function(event) {
     event.preventDefault();
