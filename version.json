@@ -1,8 +1,12 @@
-
 {
-  "latest_version": "5.7",
-  "version": "5.7",
+  "latest_version": "5.8",
+  "version": "5.8",
   "history": [
+    {
+      "version": "5.8",
+      "commit": "a3440f35d5cc4bcc16053f5a8f2f2dde0dd62611",
+      "notes": "<b>v5.8 体验优化</b><br><br>- 优化了打开设置面板的流程，现在扩展菜单会先自动关闭，避免遮挡。"
+    },
     {
       "version": "5.7",
       "commit": "a582cbab64ca853f0ba79a5c02aaff71af04a3b0",
